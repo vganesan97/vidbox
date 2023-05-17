@@ -13,7 +13,6 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository) 
 
     @GetMapping("/home")
     fun getHome(): String {
-
         return """
             <h1> this is home </h1>
         """.trimIndent()
