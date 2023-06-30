@@ -14,16 +14,17 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository) 
     @GetMapping("/home")
     fun getHome(): String {
         return """
-            <h1> this is home </h1>
+            <h1> this is chan </h1>
         """.trimIndent()
     }
-
+    
     @GetMapping("/all_movies")
     fun getAllMovies(): Any {
         val pageable = PageRequest.of(0, 10)
-        val cont = movieRepository.findAll(pageable).content.map { it.title }
+        val page = movieRepository.findAll(pageable)
+        val titles = page.content.map { it.title }
         return """
-            <h1> ${cont.size} , $cont </h1>
+            <h1> ${page.size} , $titles </h1>
         """.trimIndent()
     }
 }

@@ -19,6 +19,8 @@ repositories {
 
 dependencies {
 	runtimeOnly("org.postgresql:postgresql")
+	implementation("com.google.firebase:firebase-admin:9.2.0")
+	implementation("org.springframework.boot:spring-boot-devtools")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter")
