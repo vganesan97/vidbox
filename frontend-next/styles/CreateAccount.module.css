@@ -1,0 +1,34 @@
+.label {
+    display: inline-block;
+    width: 150px; /* adjust this as needed */
+    text-align: right;
+    margin-right: 10px; /* space between label and input */
+}
+
+.error {
+    display: inline-block;
+    color: red;
+    margin-left: 10px; /* adjust this as needed */
+}
+
+.errorModal {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: red;
+}
+.title {
+    text-align: center;
+    font-size: 2em;
+    margin-bottom: 1em;
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 6rem;
+    min-height: 100vh;
+}
