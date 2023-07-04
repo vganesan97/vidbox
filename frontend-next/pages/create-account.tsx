@@ -1,45 +1,44 @@
-import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
+import {useRouter} from 'next/router';
+import {useEffect, useState} from 'react';
 import styles from 'styles/CreateAccount.module.css'
-import { useCreateUserWithEmailAndPassword } from 'react-firebase-hooks/auth';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-
+import {useCreateUserWithEmailAndPassword} from 'react-firebase-hooks/auth';
+import {ErrorMessage, Field, Form, Formik} from 'formik';
 import {auth} from "@/firebase_creds";
+import ErrorModal from '../components/ErrorModal';
 
-
-const ErrorModal = () => {
-    return (
-        <div className={styles.errorModal}>
-            <h2>Error!</h2>
-            <p>There was an error with your registration.</p>
-        </div>
-    );
-}
 
 export default function CreateAccount() {
     const router = useRouter();
-    const [username, setUsername] = useState(null);
-    const [password, setPassword] = useState('');
+    const [errorMsg, setErrorMsg] = useState({code: '', msg: ''})
     const [errorModalOpen, setErrorModalOpen] = useState(false);
 
     const [
         createUserWithEmailAndPassword,
         user,
         loading,
-        error,
+        error
     ] = useCreateUserWithEmailAndPassword(auth);
 
     useEffect(() => {
-        if (router.query.username) {
-            // @ts-ignore
-            setUsername(router.query.username);
-        }
-    }, [router.query.username]);
-
-    useEffect(() => {
+        // @ts-ignore
+        let errorTimeout;
         if (error) {
             setErrorModalOpen(true);
+            setErrorMsg({
+                code: error.code,
+                msg: error.message
+            });
+
+            errorTimeout = setTimeout(() => {
+                setErrorModalOpen(false);
+                setErrorMsg({
+                    code: '',
+                    msg: ''
+                });
+            }, 5000);  // Clear the error message after 5 seconds
         }
+        // @ts-ignore
+        return () => clearTimeout(errorTimeout);  // Clean up on unmount
     }, [error]);
 
     interface FormValues {
@@ -50,31 +49,45 @@ export default function CreateAccount() {
         dob: string
     }
 
-    if (!username) {
-        return <div>Loading...</div>
-    }
-
+    // Handle the error in signUpWithEmailAndPassword function
     // @ts-ignore
-    const signUpWithEmailAndPassword = async (email, password, setStatus) => {
-        const userCredential = await createUserWithEmailAndPassword(email, password);
-        if (error) {  // <-- error is in scope from useCreateUserWithEmailAndPassword
-            //console.log('errorCode', error.code);
-            //console.log('errorMsg', error.message);
-            setStatus({
-                'errorCode': error.code,
-                'errorMsg': error.message
-            })
-            setErrorModalOpen(true);
-            // console.log('errorCode', error.code);
-            // console.log('errorMsg', error.message);
+    const signUpWithEmailAndPassword = async (values) => {
+        try {
+            const userCredential = await createUserWithEmailAndPassword(values.username, values.password);
+
+            // Handle if user creation is successful
+            if (userCredential) {
+                values.idToken = await userCredential.user.getIdToken(true);
+                const response = await fetch('http://127.0.0.1:8081/create-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(values),
+                });
+
+                setErrorMsg({
+                    code: '',
+                    msg: ''
+                });
+
+                router.push({
+                    pathname: '/dashboard',
+                    query: { username: values.username },
+                });
+            }
+
+        } catch (error) {
+            // This error will be handled below
+            console.error("An error occurred:", error);
         }
-        console.log("userCredential", userCredential);
-        // create user on backend
-        // const response = await fetch('http://127.0.0.1:8081/create-user', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify(data),
-        // })
+
+        // If Firebase returned an error, handle it here
+        if (error) {
+            setErrorModalOpen(true);
+            setErrorMsg({
+                code: error.code,
+                msg: error.message,
+            });
+        }
     };
 
     return (
@@ -103,67 +116,54 @@ export default function CreateAccount() {
                     }
                     return errors;
                 }}
-                onSubmit={async (values, { setSubmitting, setStatus }) => {
-                    // create user on firebase
-                    await signUpWithEmailAndPassword(values.username, values.password, setStatus)
-                    setSubmitting(false)
+                onSubmit={
+                    async (values, { setSubmitting }) => {
+                        await signUpWithEmailAndPassword(values)
+                        setSubmitting(false)
                 }}
             >
-                {({ isSubmitting, status }) => (
+                {({ isSubmitting}) => (
                     <Form>
                         <div>
-                            <label className={styles.label} htmlFor="username">Username:</label>
+                            <label className={styles.label} htmlFor="username">Username</label>
                             <Field id="username" name="username" />
                             <ErrorMessage name="username" component="div" className={styles.error}  />
                         </div>
 
                         <div>
-                            <label className={styles.label} htmlFor="password">Password:</label>
+                            <label className={styles.label} htmlFor="password">Password</label>
                             <Field id="password" name="password" type="password" />
                             <ErrorMessage name="password" component="div" className={styles.error}/>
                         </div>
 
                         <div>
-                            <label className={styles.label} htmlFor="firstName">First Name:</label>
+                            <label className={styles.label} htmlFor="firstName">First Name</label>
                             <Field id="firstName" name="firstName" />
                             <ErrorMessage name="firstName" component="div" className={styles.error}/>
                         </div>
 
                         <div>
-                            <label className={styles.label} htmlFor="lastName">Last Name:</label>
+                            <label className={styles.label} htmlFor="lastName">Last Name</label>
                             <Field id="lastName" name="lastName" />
                             <ErrorMessage name="lastName" component="div" className={styles.error}/>
                         </div>
 
                         <div>
-                            <label className={styles.label} htmlFor="dob">Date of Birth:</label>
+                            <label className={styles.label} htmlFor="dob">Date of Birth</label>
                             <Field id="dob" name="dob" type="date" />
                             <ErrorMessage name="dob" component="div" className={styles.error}/>
 
                             <button type="submit" disabled={isSubmitting}>
-                                Submit
+                                {loading ? "Loading..." : "Submit"}
                             </button>
                         </div>
 
                         <div style={{width: '100%'}}>
-                            {errorModalOpen && <ErrorModal/>}
+                            {errorModalOpen && <ErrorModal error={errorMsg}/>}
                         </div>
                     </Form>
                 )}
             </Formik>
-
-            {/*<form onSubmit={handleSubmitCreateAcct}>*/}
-            {/*    <div>*/}
-            {/*        <label htmlFor="username">Username:</label>*/}
-            {/*        <input type="text" id="username" name="username" autoComplete="current-password" />*/}
-            {/*    </div>*/}
-            {/*    <div>*/}
-            {/*        <label htmlFor="password">Password:</label>*/}
-            {/*        <input type="password" id="password" name="password" autoComplete="current-password" />*/}
-            {/*    </div>*/}
-
-            {/*    <button type="submit">Submit</button>*/}
-            {/*</form>*/}
         </main>
     );
 }

@@ -5,6 +5,13 @@
     margin-right: 10px; /* space between label and input */
 }
 
+.signupWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1rem;
+}
+
 .error {
     display: inline-block;
     color: red;

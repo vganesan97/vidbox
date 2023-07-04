@@ -7,5 +7,5 @@ data class NewUserCreds(
     val password: String,
     val firstName: String,
     val lastName: String,
-    val dob: LocalDate,
+    val dob: String,
     val idToken: String)

@@ -1,27 +1,22 @@
 package com.vidbox.backend.controllers
 
-import com.google.firebase.FirebaseApp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthException
+
 import com.vidbox.backend.entities.User
 import com.vidbox.backend.models.LoginCreds
 import com.vidbox.backend.models.LoginResponse
 import com.vidbox.backend.models.NewUserCreds
 import com.vidbox.backend.repos.UserRepository
-import org.springframework.http.HttpStatus
+import com.vidbox.backend.services.FirebaseService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDate
 import kotlin.random.Random
 
 @RestController
-class HomeController(private val userRepository: UserRepository) {
-
-    val firebaseApp = FirebaseApp.initializeApp()
+class HomeController(private val userRepository: UserRepository,
+                     private val firebaseService: FirebaseService) {
 
     fun validateInputs(creds: NewUserCreds): Boolean {
-
         return true
     }
 
@@ -30,21 +25,6 @@ class HomeController(private val userRepository: UserRepository) {
         return """
             <h1>jkjjjkh1>
         """.trimIndent()
-    }
-
-    fun getUidFromFirebaseToken(idToken: String): String {
-        val uid: String
-        // Extract the token from the Authorization header
-        try {
-            val decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken)
-            uid = decodedToken.uid
-            // The token is valid, and we have the user's UID
-            // You can use the UID to identify the user in your database
-        } catch (e: FirebaseAuthException) {
-            // Handle error: The ID token was invalid
-            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Failed to authenticate user.")
-        }
-        return uid
     }
 
     fun randomDate(): LocalDate {
@@ -60,14 +40,16 @@ class HomeController(private val userRepository: UserRepository) {
     @PostMapping("/create-user")
     fun createUser(@RequestBody userCreds: NewUserCreds): ResponseEntity<LoginResponse> {
         if (!validateInputs(userCreds)) return ResponseEntity.status(500).body(
-            LoginResponse(message = "Invalid username or password", username = userCreds.username))
+            LoginResponse(
+                message = "Invalid username or password",
+                username = userCreds.username))
 
         val username = userCreds.username
         val password = userCreds.password
         val firstName = userCreds.firstName
         val lastName = userCreds.lastName
-        val dob = randomDate()
-        val uid = getUidFromFirebaseToken(userCreds.idToken)
+        val dob = LocalDate.parse(userCreds.dob)
+        val uid = firebaseService.getUidFromFirebaseToken(userCreds.idToken)
 
         val user = User(
             username = username,
@@ -93,12 +75,10 @@ class HomeController(private val userRepository: UserRepository) {
                 username = loginCreds.username
             ))
         } else {
-            ResponseEntity.status(401).body(
-                LoginResponse(
+            ResponseEntity.status(401).body(LoginResponse(
                 message = "Unauthorized",
                 username = loginCreds.username
-            )
-            )
+            ))
         }
     }
 
