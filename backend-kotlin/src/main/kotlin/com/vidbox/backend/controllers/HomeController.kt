@@ -7,9 +7,11 @@ import com.vidbox.backend.models.LoginResponse
 import com.vidbox.backend.models.NewUserCreds
 import com.vidbox.backend.repos.UserRepository
 import com.vidbox.backend.services.FirebaseService
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
+import javax.servlet.http.HttpServletRequest
 import kotlin.random.Random
 
 @RestController
@@ -20,29 +22,14 @@ class HomeController(private val userRepository: UserRepository,
         return true
     }
 
-    @GetMapping("/home")
-    fun getHome(): String {
-        return """
-            <h1>jkjjjkh1>
-        """.trimIndent()
-    }
-
-    fun randomDate(): LocalDate {
-        val randomYears = Random.nextLong(20, 80)  // Generate a random long between 20 and 80
-        val randomMonths = Random.nextLong(0, 12)  // Generate a random long between 0 and 12
-        val randomDays = Random.nextLong(0, 31)    // Generate a random long between 0 and 31
-        return LocalDate.now()
-            .minusYears(randomYears)
-            .minusMonths(randomMonths)
-            .minusDays(randomDays)
-    }
-
     @PostMapping("/create-user")
     fun createUser(@RequestBody userCreds: NewUserCreds): ResponseEntity<LoginResponse> {
         if (!validateInputs(userCreds)) return ResponseEntity.status(500).body(
             LoginResponse(
                 message = "Invalid username or password",
-                username = userCreds.username))
+                username = userCreds.username,
+                uid = "null"
+            ))
 
         val username = userCreds.username
         val password = userCreds.password
@@ -62,24 +49,29 @@ class HomeController(private val userRepository: UserRepository,
 
         return ResponseEntity.ok(LoginResponse(
             message = "Successfully created user",
-            username = userCreds.username
+            username = userCreds.username,
+            uid = user.firebaseUid!!
         ))
     }
 
     @PostMapping("/login")
-    fun login(@RequestBody loginCreds: LoginCreds): ResponseEntity<LoginResponse> {
-        // Replace this with your own authentication logic
-        return if (loginCreds.username == "admin" && loginCreds.password == "pass") {
-            ResponseEntity.ok(LoginResponse(
-                message = "Successfully logged in",
-                username = loginCreds.username
+    fun login(@RequestBody loginCreds: LoginCreds, request: HttpServletRequest): ResponseEntity<LoginResponse> {
+        try {
+            val idToken = request.getHeader("Authorization").substring(7)
+            val uid = firebaseService.getUidFromFirebaseToken(idToken)
+            val user = userRepository.findByFirebaseUid(uid)
+            return ResponseEntity.ok(LoginResponse(
+                message = "Successfully logged in. " +
+                        "User exists and their name is ${user.firstName} ${user.lastName}",
+                username = user.username!!,
+                uid = user.firebaseUid!!
             ))
-        } else {
-            ResponseEntity.status(401).body(LoginResponse(
-                message = "Unauthorized",
-                username = loginCreds.username
+        } catch (e: Exception) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(LoginResponse(
+                message = "An error occurred: ${e.message}",
+                username = "unknown",
+                uid = "null"
             ))
         }
     }
-
 }

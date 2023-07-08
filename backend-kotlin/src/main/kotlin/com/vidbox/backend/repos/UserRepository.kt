@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface UserRepository : JpaRepository<User, Long> {
 
-    // Define additional query methods if needed
+    fun findByFirebaseUid(firebaseUid: String): User
 
 }

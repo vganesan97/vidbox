@@ -113,3 +113,11 @@ a {
     color-scheme: dark;
   }
 }
+
+.like-button {
+  background-color: rgb(var(--background-start-rgb));
+  border: none;
+  color: white;
+  cursor: pointer;/* You might want to adjust the color of the heart so it is visible on the black background */
+}
+

@@ -48,17 +48,32 @@ export default function Home() {
     const signIn = async (values: FormValues) => {
         try {
             const userCredential = await signInWithEmailAndPassword(values.username, values.password);
-            if (userCredential) {
-                router.push({
-                    pathname: '/dashboard',
-                    query: {username: values.username}
-                })
+            if (userCredential == null) return
+            const idToken = await userCredential.user.getIdToken(true);
+            const response = await fetch('http://127.0.0.1:8081/login', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + idToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(values),
+            });
 
-                setErrorMsg({
-                    code: '',
-                    msg: ''
-                });
-            }
+            const res = await response.json()
+            console.log("login response", res)
+            router.push({
+                pathname: '/dashboard',
+                query: {
+                    username: values.username,
+                    uid: res.uid
+                }
+            })
+
+            setErrorMsg({
+                code: '',
+                msg: ''
+            });
+
         } catch (error) {
             console.error('An error occurred:', error);
         }

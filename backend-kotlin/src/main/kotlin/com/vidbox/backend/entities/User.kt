@@ -11,22 +11,22 @@ data class User(
     @Column(name = "id", nullable = false)
     var id: Long? = null,
 
-    @Column(name = "username")
+    @Column(name = "username", nullable = false)
     var username: String? = null,
 
-    @Column(name = "password")
+    @Column(name = "password", nullable = false)
     var password: String? = null,
 
-    @Column(name = "first_name")
+    @Column(name = "first_name", nullable = false)
     var firstName: String? = null,
 
-    @Column(name = "last_name")
+    @Column(name = "last_name", nullable = false)
     var lastName: String? = null,
 
-    @Column(name = "dob")
+    @Column(name = "dob", nullable = false)
     var dob: LocalDate? = null,
 
-    @Column(name = "firebase_uid")
+    @Column(name = "firebase_uid", nullable = false)
     var firebaseUid: String? = null
 
 )
