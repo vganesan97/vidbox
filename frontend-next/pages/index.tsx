@@ -132,7 +132,7 @@ export default function Home() {
                   </div>
 
                   <div className={styles.signupWrapper}>
-                      <button onClick={route}>
+                      <button type="button" onClick={route}>
                           Sign Up
                       </button>
                   </div>

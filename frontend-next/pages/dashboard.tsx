@@ -31,7 +31,6 @@ function Movie({ movie }: MovieProps) {
 
     const handleLike = async (event: React.MouseEvent) => {
         event.stopPropagation();
-
         if (!user) {
             console.error("User is not authenticated");
             return;
@@ -51,11 +50,8 @@ function Movie({ movie }: MovieProps) {
             console.log("login response", res)
 
             if (response.ok) {
-                console.log(`Movie ${movie.id} liked by user ${user.uid}`);
-                setIsLiked(true);
-            } else if (response.status === 204) {
-                console.log(`Movie ${movie.id} unliked by user ${user.uid}`);
-                setIsLiked(false);
+                res.liked ? setIsLiked(true) : setIsLiked(false);
+                console.log(`Movie ${movie.id} ${res.liked ? 'liked' : 'unliked'} by user ${user.uid}`);
             } else {
                 console.error("Error liking/unliking movie:", response.status, response.statusText);
             }
@@ -63,7 +59,6 @@ function Movie({ movie }: MovieProps) {
             console.log("Error ")
         }
     };
-
 
     const handleClick = () => {
         console.log(`Post ${movie.id} clicked!`);
@@ -89,7 +84,7 @@ function Movie({ movie }: MovieProps) {
             <img src={`${imgUrl}${movie.posterPath}`}
                  alt={movie.title}
                  style={{width: "200px", height: "300px"}}/>
-            <p>{movie.overview}</p>
+            <p><b>{movie.overview}</b></p>
         </div>
     );
 }
@@ -121,6 +116,25 @@ export default function Dashboard() {
         setSearchQuery(event.target.value);
     };
 
+    const handleLikedMoviesClick = async (event: React.MouseEvent) => {
+        event.preventDefault(); // prevent form submit
+        console.log("Liked movies button clicked!"); // replace with actual implementation
+        if (!user) {
+            console.error("User is not authenticated");
+            return;
+        }
+        const idToken = await user.getIdToken(true);
+        const response = await fetch('http://127.0.0.1:8081/movies/liked-movies', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + idToken,
+                'Content-Type': 'application/json'
+            },
+        })
+        const res = await response.json()
+        console.log(`liked movies for user: ${user.email}`, res)
+    };
+
     const handleSearchSubmit = async (event: React.ChangeEvent<HTMLFormElement>) => {
         event.preventDefault();
         const response = await fetch(`http://127.0.0.1:8081/movies/search-movies?query=${searchQuery}`);
@@ -148,7 +162,14 @@ export default function Dashboard() {
                             onChange={handleSearchChange}
                             placeholder="Search for movies..."
                         />
-                        <button type="submit">Search</button>
+                        <div>
+                            <button type="submit">Search</button>
+                        </div>
+                        <div>
+                            <button onClick={handleLikedMoviesClick}>
+                                Liked Movies
+                            </button>
+                        </div>
                     </form>
                 </div>
 

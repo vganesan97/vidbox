@@ -7,7 +7,7 @@ import javax.persistence.*
 data class MovieLikes(
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,
+    val id: Int? = null,
 
     @Column(name = "user_id")
     val userId: Int? = null,

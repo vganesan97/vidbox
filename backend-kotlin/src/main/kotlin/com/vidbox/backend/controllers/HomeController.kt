@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 import javax.servlet.http.HttpServletRequest
-import kotlin.random.Random
 
 @RestController
 class HomeController(private val userRepository: UserRepository,
@@ -36,7 +35,7 @@ class HomeController(private val userRepository: UserRepository,
         val firstName = userCreds.firstName
         val lastName = userCreds.lastName
         val dob = LocalDate.parse(userCreds.dob)
-        val uid = firebaseService.getUidFromFirebaseToken(userCreds.idToken)
+        val uid = firebaseService.getUidFromFirebaseToken(idToken = userCreds.idToken)
 
         val user = User(
             username = username,
@@ -57,8 +56,7 @@ class HomeController(private val userRepository: UserRepository,
     @PostMapping("/login")
     fun login(@RequestBody loginCreds: LoginCreds, request: HttpServletRequest): ResponseEntity<LoginResponse> {
         try {
-            val idToken = request.getHeader("Authorization").substring(7)
-            val uid = firebaseService.getUidFromFirebaseToken(idToken)
+            val uid = firebaseService.getUidFromFirebaseToken(request = request)
             val user = userRepository.findByFirebaseUid(uid)
             return ResponseEntity.ok(LoginResponse(
                 message = "Successfully logged in. " +

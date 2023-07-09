@@ -21,34 +21,39 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
                       private val firebaseService: FirebaseService) {
 
     @PostMapping("/like-movie")
-    fun likeMovie(@RequestBody like: MovieLikes, request: HttpServletRequest): ResponseEntity<MovieLikes> {
+    fun likeMovie(@RequestBody like: MovieLikes, request: HttpServletRequest): ResponseEntity<Any> {
         val movieId = like.movieId ?: throw IllegalArgumentException("Movie ID is null")
 
         return try {
-            val idToken = request.getHeader("Authorization").substring(7)
-
-            val uid = firebaseService.getUidFromFirebaseToken(idToken)
+            val uid = firebaseService.getUidFromFirebaseToken(request = request)
             val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
-            println("user id $userId")
 
-            val existingLike = movieLikesRepository.findByUserIdAndMovieId(userId.toInt(), movieId)
-            println("existing like $existingLike")
+            val existingLike = movieLikesRepository.findByUserIdAndMovieId(userId, movieId)
 
             if (existingLike == null) {
                 val savedLike = MovieLikes(
-                    userId = userId.toInt(),
+                    userId = userId,
                     movieId = movieId
                 )
                 val saved = movieLikesRepository.save(savedLike)
                 println("saved like $savedLike")
-                ResponseEntity.ok(savedLike)
+                ResponseEntity.ok(mapOf("liked" to true))
             } else {
-                movieLikesRepository.deleteByUserIdAndMovieId(userId, movieId)
-                ResponseEntity.ok(existingLike)
+                movieLikesRepository.deleteById(existingLike.id!!)
+                println("deleted like $existingLike")
+                ResponseEntity.ok(mapOf("liked" to false))
             }
         } catch (e: Exception) {
             ResponseEntity(HttpStatus.UNAUTHORIZED)
         }
+    }
+
+    @GetMapping("/liked-movies")
+    fun likedMovies(request: HttpServletRequest): ResponseEntity<Any> {
+        val uid = firebaseService.getUidFromFirebaseToken(request = request)
+        val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+        val likedMovies = movieLikesRepository.findLikedMoviesByUserId(userId)
+        return ResponseEntity.ok(likedMovies)
     }
 
     @GetMapping("/search-movies")
