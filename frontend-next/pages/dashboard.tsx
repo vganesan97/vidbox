@@ -11,6 +11,7 @@ type Movie = {
     title: string;
     releaseDate: number;
     movieId: number;
+    liked: boolean;
 }
 
 type MovieProps = {
@@ -26,7 +27,7 @@ function Movie({ movie }: MovieProps) {
     var imgUrl = 'https://image.tmdb.org/t/p/original/'
 
     const [isHovered, setIsHovered] = useState(false);
-    const [isLiked, setIsLiked] = useState(false);
+    const [isLiked, setIsLiked] = useState(movie.liked);
     const [user, loading, error] = useAuthState(auth)
 
     const handleLike = async (event: React.MouseEvent) => {
@@ -105,12 +106,25 @@ export default function Dashboard() {
     const [movieInfos, setMovieInfos] = useState([])
     const [searchQuery, setSearchQuery] = useState('');
     const [user, loading, error] = useAuthState(auth)
+    const [likedMovies, setLikedMovies] = useState<Movie[]>([]);
+    const [idToken, setIdToken] = useState<string | null>(null); // add this line
+
 
     useEffect(() => {
         if (router.query.username) {
             setUsername(router.query.username as string);
         }
     }, [router.query.username, user]);
+
+    // useEffect(() => {
+    //     const getToken = async () => {
+    //         if (user) {
+    //             const token = await user.getIdToken(true);
+    //             setIdToken(token); // set the idToken
+    //         }
+    //     }
+    //     getToken().catch(error => console.error('Error getting token:', error));
+    // }, [user]);
 
     const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(event.target.value);
@@ -119,6 +133,9 @@ export default function Dashboard() {
     const handleLikedMoviesClick = async (event: React.MouseEvent) => {
         event.preventDefault(); // prevent form submit
         console.log("Liked movies button clicked!"); // replace with actual implementation
+
+        setMovieInfos([]); // Clear the current search results
+
         if (!user) {
             console.error("User is not authenticated");
             return;
@@ -129,15 +146,34 @@ export default function Dashboard() {
             headers: {
                 'Authorization': 'Bearer ' + idToken,
                 'Content-Type': 'application/json'
-            },
+            }
         })
-        const res = await response.json()
-        console.log(`liked movies for user: ${user.email}`, res)
+        if (response.ok) {
+            const res = await response.json();
+            console.log(`Liked movies for user: ${user.email}`, res);
+            setLikedMovies(res); // Add the liked movies to the state
+        } else {
+            console.error(`Error: ${response.status}`);
+        }
     };
 
     const handleSearchSubmit = async (event: React.ChangeEvent<HTMLFormElement>) => {
         event.preventDefault();
-        const response = await fetch(`http://127.0.0.1:8081/movies/search-movies?query=${searchQuery}`);
+        setLikedMovies([]); // Clear the current liked movies
+
+        if (!user) {
+            console.error("User is not authenticated");
+            return;
+        }
+        const idToken = await user.getIdToken(true);
+
+        const response = await fetch(`http://127.0.0.1:8081/movies/search-movies?query=${searchQuery}`,{
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + idToken,
+                'Content-Type': 'application/json'
+            }
+        });
         if (!response.ok) {
             console.error("Server response:", response.status, response.statusText);
             return;
@@ -174,8 +210,17 @@ export default function Dashboard() {
                 </div>
 
                 <div>
-                    <h1>{movieInfos.length > 0 ? 'Search Results' : ''}</h1>
-                    <SearchResultsList movies={movieInfos}/>
+                    {likedMovies.length > 0 ? (
+                        <>
+                            <h1>Liked Movies</h1>
+                            <SearchResultsList movies={likedMovies}/>
+                        </>
+                    ) : (
+                        <>
+                            <h1>{movieInfos.length > 0 ? 'Search Results' : ''}</h1>
+                            <SearchResultsList movies={movieInfos}/>
+                        </>
+                    )}
                 </div>
 
             </div>

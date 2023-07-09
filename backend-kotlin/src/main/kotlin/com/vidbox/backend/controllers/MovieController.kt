@@ -53,15 +53,24 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
         val likedMovies = movieLikesRepository.findLikedMoviesByUserId(userId)
+        likedMovies.forEach { movie -> movie.liked = true }
         return ResponseEntity.ok(likedMovies)
     }
 
     @GetMapping("/search-movies")
     fun searchMovies(@RequestParam query: String,
                      @RequestParam(defaultValue = "0") page: Int,
-                     @RequestParam(defaultValue = "10") size: Int): ResponseEntity<Page<MovieInfoTopRated>> {
+                     @RequestParam(defaultValue = "10") size: Int,
+                     request: HttpServletRequest): ResponseEntity<Page<MovieInfoTopRated>> {
+        val uid = firebaseService.getUidFromFirebaseToken(request = request)
+        val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
         val pageable = PageRequest.of(page, size)
         val resultsPage = movieRepository.findByTitleContains(query, pageable)
+        val likedMovies = movieLikesRepository.findLikedMoviesByUserId(userId)
+        resultsPage.content.forEach { movie ->
+            if (movie in likedMovies) movie.liked = true
+        }
+        //val resultsPage = movieRepository.findAllWithLiked(userId)
         return ResponseEntity.ok(resultsPage)
     }
 

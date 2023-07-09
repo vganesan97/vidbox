@@ -12,5 +12,7 @@ interface MovieLikesRepository : JpaRepository<MovieLikes, Int> {
     @Query("SELECT m FROM MovieInfoTopRated m JOIN MovieLikes l ON m.id = l.movieId WHERE l.userId = :userId")
     fun findLikedMoviesByUserId(userId: Int): List<MovieInfoTopRated>
 
+    fun findAllByUserId(userId: Int): List<MovieLikes>
+
 }
 

@@ -26,5 +26,8 @@ data class MovieInfoTopRated(
     var releaseDate: Int? = null,
 
     @Column(name = "movie_id")
-    var movieId: Int? = null
+    var movieId: Int? = null,
+
+    @Transient
+    var liked: Boolean = false
 )
