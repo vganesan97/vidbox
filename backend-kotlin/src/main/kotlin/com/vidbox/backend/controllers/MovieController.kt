@@ -2,6 +2,7 @@ package com.vidbox.backend.controllers
 
 import com.vidbox.backend.repos.MovieLikesRepository
 import com.vidbox.backend.entities.MovieInfoTopRated
+import com.vidbox.backend.entities.MovieInfoTopRatedProjection
 import com.vidbox.backend.entities.MovieLikes
 import com.vidbox.backend.repos.MovieInfoTopRatedRepository
 import com.vidbox.backend.repos.UserRepository
@@ -53,7 +54,8 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
         val likedMovies = movieLikesRepository.findLikedMoviesByUserId(userId)
-        likedMovies.forEach { movie -> movie.liked = true }
+        //println("liked movies: $likedMovies")
+        //likedMovies.forEach { movie -> movie.liked = true }
         return ResponseEntity.ok(likedMovies)
     }
 
@@ -61,16 +63,20 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
     fun searchMovies(@RequestParam query: String,
                      @RequestParam(defaultValue = "0") page: Int,
                      @RequestParam(defaultValue = "10") size: Int,
-                     request: HttpServletRequest): ResponseEntity<Page<MovieInfoTopRated>> {
+                     request: HttpServletRequest): ResponseEntity<Page<MovieInfoTopRatedProjection>> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
         val pageable = PageRequest.of(page, size)
-        val resultsPage = movieRepository.findByTitleContains(query, pageable)
-        val likedMovies = movieLikesRepository.findLikedMoviesByUserId(userId)
-        resultsPage.content.forEach { movie ->
-            if (movie in likedMovies) movie.liked = true
-        }
+        val resultsPage = movieRepository.findByTitleContains2(query, pageable, userId)
+       // val resultsPage = movieRepository.findByTitleContains(query, pageable)
+
+//        val likedMovies = movieLikesRepository.findLikedMoviesByUserId(userId)
+//        resultsPage.content.forEach { movie ->
+//            if (movie in likedMovies) movie.liked = true
+//        }
         //val resultsPage = movieRepository.findAllWithLiked(userId)
+        //val resultsPage = movieRepository.findMoviesWithLikedFlag(query, userId, pageable)
+
         return ResponseEntity.ok(resultsPage)
     }
 

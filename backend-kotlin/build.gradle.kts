@@ -19,6 +19,8 @@ repositories {
 
 dependencies {
 	runtimeOnly("org.postgresql:postgresql")
+	implementation(platform("com.google.cloud:libraries-bom:25.1.0"))
+	implementation("com.google.cloud:google-cloud-storage")
 	implementation("com.google.firebase:firebase-admin:9.2.0")
 	implementation("org.springframework.boot:spring-boot-devtools")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")

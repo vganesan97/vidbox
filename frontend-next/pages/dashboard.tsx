@@ -1,16 +1,17 @@
 import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { useState, useEffect, useRef } from 'react';
+import { useAuthState, useSignOut } from 'react-firebase-hooks/auth';
 import { auth } from "@/firebase_creds";
+
 
 type Movie = {
     id: number;
-    posterPath: string;
-    backdropPath: string;
+    poster_path: string;
+    backdrop_path: string;
     overview: string;
     title: string;
-    releaseDate: number;
-    movieId: number;
+    release_date: number;
+    movie_id: number;
     liked: boolean;
 }
 
@@ -20,6 +21,37 @@ type MovieProps = {
 
 type SearchResultsListProps = {
     movies: Movie[];
+}
+
+function SignOut() {
+    const [signOut, loading, error] = useSignOut(auth);
+    const router = useRouter();
+
+
+    if (error) {
+        return (
+            <div>
+                <p>Error: {error.message}</p>
+            </div>
+        );
+    }
+    if (loading) {
+        return <p>Loading...</p>;
+    }
+    return (
+        <div className="App">
+            <button
+                onClick={async () => {
+                    const success = await signOut();
+                    if (success) {
+                        router.push('/');
+                    }
+                }}
+            >
+                Sign out
+            </button>
+        </div>
+    );
 }
 
 function Movie({ movie }: MovieProps) {
@@ -62,7 +94,7 @@ function Movie({ movie }: MovieProps) {
     };
 
     const handleClick = () => {
-        console.log(`Post ${movie.id} clicked!`);
+        console.log(`Movie ${movie.id} clicked!`);
     }
 
     const movieStyle = {
@@ -77,12 +109,12 @@ function Movie({ movie }: MovieProps) {
              onMouseEnter={() => setIsHovered(true)}
              onMouseLeave={() => setIsHovered(false)}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
-                <h2 style={{ marginRight: '10px' }}>{movie.title}{` (${movie.releaseDate})`}</h2>
+                <h2 style={{ marginRight: '10px' }}>{movie.title}{` (${movie.release_date})`}</h2>
                 <button
                     onClick={(event: React.MouseEvent) => handleLike(event)}
                     className="like-button">{isLiked ? '❤️' : '♡'}️</button>
             </div>
-            <img src={`${imgUrl}${movie.posterPath}`}
+            <img src={`${imgUrl}${movie.poster_path}`}
                  alt={movie.title}
                  style={{width: "200px", height: "300px"}}/>
             <p><b>{movie.overview}</b></p>
@@ -107,28 +139,79 @@ export default function Dashboard() {
     const [searchQuery, setSearchQuery] = useState('');
     const [user, loading, error] = useAuthState(auth)
     const [likedMovies, setLikedMovies] = useState<Movie[]>([]);
-    const [idToken, setIdToken] = useState<string | null>(null); // add this line
 
+    const userPrevious = useRef();
 
     useEffect(() => {
-        if (router.query.username) {
-            setUsername(router.query.username as string);
+        // If the user state changes
+        if (user !== userPrevious.current) {
+            // If the user state is not null
+            if (user) {
+                console.log(`logged in: ${user.uid}`);
+                setUsername(user.email);
+            }
+            // Update the previous user state
+            // @ts-ignore
+            userPrevious.current = user;
         }
-    }, [router.query.username, user]);
+    }, [user]);
 
-    // useEffect(() => {
-    //     const getToken = async () => {
-    //         if (user) {
-    //             const token = await user.getIdToken(true);
-    //             setIdToken(token); // set the idToken
-    //         }
-    //     }
-    //     getToken().catch(error => console.error('Error getting token:', error));
-    // }, [user]);
 
     const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(event.target.value);
     };
+
+    const handleCreateGroupClick = (event: React.MouseEvent) => {
+        event.preventDefault()
+    }
+
+    const getSignedUrl = async (): Promise<string> => {
+        if (user == null) {
+            console.error("user not logged in or authorized");
+            throw new Error("user not logged in or authorized");
+        }
+
+        const idToken = await user.getIdToken(true);
+        const response = await fetch(`http://127.0.0.1:8081/avatar/user`, {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + idToken
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`GET request failed: ${response.status}`);
+        }
+
+        const responseStr = await response.json();
+        console.log("signed url response", responseStr.signedUrl);
+
+        return responseStr.signedUrl
+    }
+
+
+    async function handleUpdateProfileAvatar(event: React.ChangeEvent<HTMLInputElement>) {
+        const file = event.target.files?.[0];
+
+        // Check the file type before upload
+        if (file != null && !file.type.startsWith('image/jpeg')) {
+            throw new Error('File is not an jpeg image');
+        }
+
+        const signedUrl = await getSignedUrl()
+        const response = await fetch(signedUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+                'Content-Type': 'image/jpeg' // Important: the content type should match the one you specified when generating the signed URL
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Upload failed: ${response.status}`);
+        }
+    }
+
 
     const handleLikedMoviesClick = async (event: React.MouseEvent) => {
         event.preventDefault(); // prevent form submit
@@ -165,8 +248,8 @@ export default function Dashboard() {
             console.error("User is not authenticated");
             return;
         }
-        const idToken = await user.getIdToken(true);
 
+        const idToken = await user.getIdToken(true);
         const response = await fetch(`http://127.0.0.1:8081/movies/search-movies?query=${searchQuery}`,{
             method: 'GET',
             headers: {
@@ -182,6 +265,31 @@ export default function Dashboard() {
         console.log("data:", data);
         setMovieInfos(data.content)
     };
+
+    // const handleLogOut = async (event: React.MouseEvent) => {
+    //     event.preventDefault();
+    //     setLikedMovies([]); // Clear the current liked movies
+    //
+    //     if (!user) {
+    //         console.error("User is not authenticated");
+    //         return;
+    //     }
+    //     const idToken = await user.getIdToken(true);
+    //     const response = await fetch(`http://127.0.0.1:8081/movies/search-movies?query=${searchQuery}`,{
+    //         method: 'GET',
+    //         headers: {
+    //             'Authorization': 'Bearer ' + idToken,
+    //             'Content-Type': 'application/json'
+    //         }
+    //     });
+    //     if (!response.ok) {
+    //         console.error("Server response:", response.status, response.statusText);
+    //         return;
+    //     }
+    //     const data = await response.json();
+    //     console.log("data:", data);
+    //     setMovieInfos(data.content)
+    // };
 
 
     if (!loading && user) {
@@ -202,10 +310,38 @@ export default function Dashboard() {
                             <button type="submit">Search</button>
                         </div>
                         <div>
+                            <button onClick={handleCreateGroupClick}>
+                                Create Group
+                            </button>
+                        </div>
+                        <div>
+                            <h2>
+                                <label
+                                    htmlFor="fileInput"
+                                    className="custom-file-upload"
+                                    style={{cursor: "pointer", textDecoration: "underline", color: "blue"}}
+                                >
+                                    Upload a Profile Pic
+                                </label>
+                            </h2>
+                            <input
+                                type="file"
+                                id="fileInput"
+                                accept="image/jpeg"
+                                onChange={handleUpdateProfileAvatar}
+                                style={{display: 'none'}}/>
+                        </div>
+                        <div>
                             <button onClick={handleLikedMoviesClick}>
                                 Liked Movies
                             </button>
                         </div>
+                        <SignOut/>
+                        {/*<div>*/}
+                        {/*    <button onClick={handleLogOut}>*/}
+                        {/*        Log Out*/}
+                        {/*    </button>*/}
+                        {/*</div>*/}
                     </form>
                 </div>
 
@@ -225,10 +361,16 @@ export default function Dashboard() {
 
             </div>
         );
-    } else {
+    } else if (loading) {
         return (
             <div>
                 <h1>loading..</h1>
+            </div>
+        )
+    } else {
+        return (
+            <div>
+                <h1>signed out</h1>
             </div>
         )
     }
