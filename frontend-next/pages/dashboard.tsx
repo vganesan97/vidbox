@@ -137,6 +137,7 @@ export default function Dashboard() {
     const [username, setUsername] = useState<string | null>(null);
     const [movieInfos, setMovieInfos] = useState([])
     const [searchQuery, setSearchQuery] = useState('');
+    const [signedURL, setSignedURL] = useState<string>('');
     const [user, loading, error] = useAuthState(auth)
     const [likedMovies, setLikedMovies] = useState<Movie[]>([]);
 
@@ -149,6 +150,9 @@ export default function Dashboard() {
             if (user) {
                 console.log(`logged in: ${user.uid}`);
                 setUsername(user.email);
+                console.log(`router query signed url: ${router.query.signedURL}`)
+                if (typeof router.query.signedURL === 'string') setSignedURL(router.query.signedURL);
+                console.log(`profile pic signed url: ${signedURL}`)
             }
             // Update the previous user state
             // @ts-ignore
@@ -172,7 +176,7 @@ export default function Dashboard() {
         }
 
         const idToken = await user.getIdToken(true);
-        const response = await fetch(`http://127.0.0.1:8081/avatar/user`, {
+        const response = await fetch(`http://127.0.0.1:8081/avatar/user/put-signed-url`, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken
@@ -266,31 +270,31 @@ export default function Dashboard() {
         setMovieInfos(data.content)
     };
 
-    // const handleLogOut = async (event: React.MouseEvent) => {
-    //     event.preventDefault();
-    //     setLikedMovies([]); // Clear the current liked movies
-    //
-    //     if (!user) {
-    //         console.error("User is not authenticated");
-    //         return;
-    //     }
-    //     const idToken = await user.getIdToken(true);
-    //     const response = await fetch(`http://127.0.0.1:8081/movies/search-movies?query=${searchQuery}`,{
-    //         method: 'GET',
-    //         headers: {
-    //             'Authorization': 'Bearer ' + idToken,
-    //             'Content-Type': 'application/json'
-    //         }
-    //     });
-    //     if (!response.ok) {
-    //         console.error("Server response:", response.status, response.statusText);
-    //         return;
-    //     }
-    //     const data = await response.json();
-    //     console.log("data:", data);
-    //     setMovieInfos(data.content)
-    // };
+    let attempts = 0
+    const handleRefreshSignedURL = async () => {
+        if (attempts >= 3) {  // only try to refresh the URL up to 3 times
+            console.error('Failed to load image after 3 attempts');
+            attempts = 0
+            return;
+        }
 
+        if (!user) {
+            console.error("User is not authenticated");
+            return;
+        }
+        const idToken = await user.getIdToken(true);
+
+        const response = await fetch(`http://127.0.0.1:8081/avatar/user/get-signed-url`, {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + idToken
+            }
+        });
+
+        const res = await response.json()
+
+        setSignedURL(res.signedURL)
+    }
 
     if (!loading && user) {
         return (
@@ -299,6 +303,17 @@ export default function Dashboard() {
                     <h1>
                         {user.email}
                     </h1>
+                    <div>
+                        {typeof router.query.signedURL === 'string' && router.query.signedURL.length > 0 ? (
+                            <><img
+                                src={router.query.signedURL}
+                                onError={handleRefreshSignedURL}
+                                alt="Profile Pic"
+                                style={{width: "100px", height: "100px"}}/></>
+                        ) : (
+                            <></>
+                        )}
+                    </div>
                     <form onSubmit={handleSearchSubmit}>
                         <input
                             type="text"

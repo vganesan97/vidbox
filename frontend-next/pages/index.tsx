@@ -23,6 +23,7 @@ export default function Home() {
         error,
     ] = useSignInWithEmailAndPassword(auth);
 
+
     useEffect(() => {
         // @ts-ignore
         let errorTimeout;
@@ -60,12 +61,23 @@ export default function Home() {
             });
 
             const res = await response.json()
-            console.log("login response", res)
+
+            const response1 = await fetch(`http://127.0.0.1:8081/avatar/user/get-signed-url`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + idToken
+                }
+            });
+
+            const res1 = await response1.json()
+            console.log("signed url: ", res1)
+
             router.push({
                 pathname: '/dashboard',
                 query: {
                     username: values.username,
-                    uid: res.uid
+                    uid: res.uid,
+                    signedURL: res1.signedUrl
                 }
             })
 

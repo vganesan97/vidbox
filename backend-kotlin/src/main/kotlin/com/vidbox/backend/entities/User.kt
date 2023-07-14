@@ -27,6 +27,9 @@ data class User(
     var dob: LocalDate? = null,
 
     @Column(name = "firebase_uid", nullable = false)
-    var firebaseUid: String? = null
+    var firebaseUid: String? = null,
+
+    @Column(name = "profile_pic", nullable = true)
+    var profilePic: String? = null
 
 )
