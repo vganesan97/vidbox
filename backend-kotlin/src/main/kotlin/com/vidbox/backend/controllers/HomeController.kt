@@ -1,12 +1,10 @@
 package com.vidbox.backend.controllers
 
-
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.storage.*
 import com.google.cloud.storage.StorageException
 import com.vidbox.backend.entities.GroupInfos
 import com.vidbox.backend.entities.GroupMembers
-import com.vidbox.backend.entities.MovieInfoTopRatedProjection
 import com.vidbox.backend.entities.User
 import com.vidbox.backend.models.GroupInfo
 import com.vidbox.backend.models.LoginCreds
@@ -39,18 +37,6 @@ class HomeController(private val userRepository: UserRepository,
                      private val groupMemberRepository: GroupMemberRepository,
                      private val firebaseService: FirebaseService) {
 
-
-//    @PostMapping("/avatar/groups/{groupId}")
-//    fun updateGroupAvatar(@PathVariable groupId: String, request: HttpServletRequest): ResponseEntity<String> {
-//        return try {
-//            val uid = firebaseService.getUidFromFirebaseToken(request = request)
-//            val user = userRepository.findByFirebaseUid(uid)
-//            ResponseEntity.ok(generateV4PutObjectSignedUrl(isUser = false, user).toString())
-//        } catch (e: Exception) {
-//            ResponseEntity.badRequest().body("problem occurred, probably unauthorized")
-//        }
-//    }
-
     fun signedUrlHelper(objectName: String): Pair<Storage, BlobInfo> {
         val projectId = "vidbox-7d2c1"
         val bucketName = "avatar_pictures"
@@ -62,6 +48,7 @@ class HomeController(private val userRepository: UserRepository,
             .build().service
         return Pair(storage, BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build())
     }
+
     @Throws(StorageException::class)
     fun signedGetUrlDetails(objectName: String): URL {
         val (storage, blobInfo) = signedUrlHelper(objectName)
@@ -75,8 +62,8 @@ class HomeController(private val userRepository: UserRepository,
         extensionHeaders["Content-Type"] = "image/jpeg"
         return storage.signUrl(
             blobInfo,
-            15,
-            TimeUnit.MINUTES,
+            7,
+            TimeUnit.DAYS,
             Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
             Storage.SignUrlOption.withExtHeaders(extensionHeaders),
             Storage.SignUrlOption.withV4Signature()
@@ -86,8 +73,17 @@ class HomeController(private val userRepository: UserRepository,
     fun updateProfileAvatar(user: User): URL {
         val profileAvatarAddress = if (user.profilePic != null) user.profilePic!! else "profiles/${UUID.randomUUID()}"
         val signedUrlDetails = signedPutUrlDetails(profileAvatarAddress)
+        println("signed url details: ${signedUrlDetails.toString()}")
         // do after getting urlDetails in case getting the signed url throws an exception
         if (user.profilePic == null) createProfileAvatarInDB(user, profileAvatarAddress)
+        return signedUrlDetails
+    }
+
+    fun updateGroupAvatar(group: GroupInfos): URL {
+        val groupAvatarAddress = if (group.groupAvatar != null) group.groupAvatar!! else "groups/${UUID.randomUUID()}"
+        val signedUrlDetails = signedPutUrlDetails(groupAvatarAddress)
+        // do after getting urlDetails in case getting the signed url throws an exception
+        if (group.groupAvatar == null) createGroupAvatarInDB(group, groupAvatarAddress)
         return signedUrlDetails
     }
 
@@ -97,10 +93,25 @@ class HomeController(private val userRepository: UserRepository,
         return signedGetUrlDetails(profileAvatarAddress)
     }
 
+    fun refreshGroupAvatarSignedURL(group: GroupInfos): URL? {
+        if (group.groupAvatar == null) return null
+        val groupAvatarAddress = group.groupAvatar!!
+        return signedGetUrlDetails(groupAvatarAddress)
+    }
+
     fun createProfileAvatarInDB(user: User, objectName: String) {
         try {
             user.profilePic = objectName
             userRepository.save(user)
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    fun createGroupAvatarInDB(group: GroupInfos, objectName: String) {
+        try {
+            group.groupAvatar = objectName
+            groupInfoRepository.save(group)
         } catch (e: Exception) {
             throw e
         }
@@ -118,6 +129,23 @@ class HomeController(private val userRepository: UserRepository,
         }
     }
 
+    @GetMapping("/avatar/group/{groupInfoId}/put-signed-url")
+    fun getPutGroupAvatarSignedURL(@PathVariable groupInfoId: Int, request: HttpServletRequest): ResponseEntity<GCSSignedURL> {
+        return try {
+            //val uid = firebaseService.getUidFromFirebaseToken(request = request)
+            //val user = userRepository.findByFirebaseUid(uid)
+            val group = groupInfoRepository.findById(groupInfoId)
+            if (group.isPresent) {
+                val signedUrl = updateGroupAvatar(group.get())
+                ResponseEntity.ok(GCSSignedURL(signedUrl.toString()))
+            } else {
+                ResponseEntity.badRequest().body(GCSSignedURL("group for groupId: $groupInfoId does not exist"))
+            }
+        } catch (e: Exception) {
+            ResponseEntity.badRequest().body(GCSSignedURL("error"))
+        }
+    }
+
     @GetMapping("/avatar/user/get-signed-url")
     fun getGetProfileAvatarSignedURL(request: HttpServletRequest): ResponseEntity<GCSSignedURL> {
         return try {
@@ -127,6 +155,25 @@ class HomeController(private val userRepository: UserRepository,
             ResponseEntity.ok(
                 if (signedUrl != null) GCSSignedURL(signedUrl.toString()) else GCSSignedURL("")
             )
+        } catch (e: Exception) {
+            ResponseEntity.badRequest().body(GCSSignedURL("error"))
+        }
+    }
+
+    @GetMapping("/avatar/group/{groupInfoId}/get-signed-url")
+    fun getGetGroupAvatarSignedURL(@PathVariable groupInfoId: Int, request: HttpServletRequest): ResponseEntity<GCSSignedURL> {
+        return try {
+           // val uid = firebaseService.getUidFromFirebaseToken(request = request)
+            // val user = userRepository.findByFirebaseUid(uid)
+            val group = groupInfoRepository.findById(groupInfoId)
+            if (group.isPresent) {
+                val signedUrl = refreshGroupAvatarSignedURL(group.get())
+                ResponseEntity.ok(
+                    if (signedUrl != null) GCSSignedURL(signedUrl.toString()) else GCSSignedURL("")
+                )
+            } else {
+                ResponseEntity.badRequest().body(GCSSignedURL("group for groupId: $groupInfoId does not exist"))
+            }
         } catch (e: Exception) {
             ResponseEntity.badRequest().body(GCSSignedURL("error"))
         }
@@ -151,6 +198,7 @@ class HomeController(private val userRepository: UserRepository,
             )
             groupMemberRepository.save(groupMember)
             return ResponseEntity.ok(mapOf(
+                "groupId" to group.id,
                 "groupName" to group.groupName,
                 "groupDescription" to group.groupDescription,
                 "groupAdmin" to group.groupAdminId,
@@ -171,6 +219,13 @@ class HomeController(private val userRepository: UserRepository,
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
         val pageable = PageRequest.of(page, size)
         val resultsPage = groupInfoRepository.findPublicGroupsByName(query, pageable)
+        resultsPage.forEach {
+            if (it.groupAvatar != null) {
+                it.groupAvatar = refreshGroupAvatarSignedURL(it).toString()
+            } else {
+                it.groupAvatar = "https://cdn.britannica.com/39/7139-050-A88818BB/Himalayan-chocolate-point.jpg"
+            }
+        }
         return ResponseEntity.ok(resultsPage)
     }
 

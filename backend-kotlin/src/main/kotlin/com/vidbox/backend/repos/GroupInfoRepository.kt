@@ -18,4 +18,5 @@ interface GroupInfoRepository : JpaRepository<GroupInfos, Int> {
                     AND to_tsvector('english', g.group_name) @@ to_tsquery('english', :query || ':*')""",
         nativeQuery = true)
     fun findPublicGroupsByName(query: String, pageable: Pageable): Page<GroupInfos>
+
 }
