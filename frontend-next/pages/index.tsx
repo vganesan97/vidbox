@@ -6,7 +6,7 @@ import { useSignInWithEmailAndPassword } from 'react-firebase-hooks/auth';
 import { auth } from "@/firebase_creds";
 import ErrorModal from "@/components/ErrorModal";
 
-interface FormValues {
+interface SignInFormValues {
     username: string;
     password: string;
 }
@@ -22,7 +22,6 @@ export default function Home() {
         loading,
         error,
     ] = useSignInWithEmailAndPassword(auth);
-
 
     useEffect(() => {
         // @ts-ignore
@@ -46,7 +45,7 @@ export default function Home() {
         return () => clearTimeout(errorTimeout);  // Clean up on unmount
     }, [error]);
 
-    const signIn = async (values: FormValues) => {
+    const signIn = async (values: SignInFormValues) => {
         try {
             const userCredential = await signInWithEmailAndPassword(values.username, values.password);
             if (userCredential == null) return
@@ -112,7 +111,7 @@ export default function Home() {
               validateOnChange={false}
               validateOnBlur={false}
               validate={(values) => {
-                  const errors: Partial<FormValues> = {};
+                  const errors: Partial<SignInFormValues> = {};
                   if (!values.username) errors.username = 'Required';
                   if (!values.password) errors.password = 'Required';
 

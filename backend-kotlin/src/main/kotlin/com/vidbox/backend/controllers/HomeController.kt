@@ -4,13 +4,20 @@ package com.vidbox.backend.controllers
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.storage.*
 import com.google.cloud.storage.StorageException
+import com.vidbox.backend.entities.GroupInfos
+import com.vidbox.backend.entities.GroupMembers
+import com.vidbox.backend.entities.MovieInfoTopRatedProjection
 import com.vidbox.backend.entities.User
 import com.vidbox.backend.models.GroupInfo
 import com.vidbox.backend.models.LoginCreds
 import com.vidbox.backend.models.LoginResponse
 import com.vidbox.backend.models.NewUserCreds
+import com.vidbox.backend.repos.GroupInfoRepository
+import com.vidbox.backend.repos.GroupMemberRepository
 import com.vidbox.backend.repos.UserRepository
 import com.vidbox.backend.services.FirebaseService
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -28,6 +35,8 @@ enum class GCSRequestType { }
 
 @RestController
 class HomeController(private val userRepository: UserRepository,
+                     private val groupInfoRepository: GroupInfoRepository,
+                     private val groupMemberRepository: GroupMemberRepository,
                      private val firebaseService: FirebaseService) {
 
 
@@ -56,7 +65,7 @@ class HomeController(private val userRepository: UserRepository,
     @Throws(StorageException::class)
     fun signedGetUrlDetails(objectName: String): URL {
         val (storage, blobInfo) = signedUrlHelper(objectName)
-        return storage.signUrl(blobInfo, 15, TimeUnit.MINUTES, Storage.SignUrlOption.withV4Signature())
+        return storage.signUrl(blobInfo, 3, TimeUnit.HOURS, Storage.SignUrlOption.withV4Signature())
     }
 
     @Throws(StorageException::class)
@@ -125,8 +134,44 @@ class HomeController(private val userRepository: UserRepository,
 
     @PostMapping("/create-group")
     fun createGroup(@RequestBody groupInfo: GroupInfo, request: HttpServletRequest): ResponseEntity<Any> {
+        return try {
+            val uid = firebaseService.getUidFromFirebaseToken(request = request)
+            val user = userRepository.findByFirebaseUid(uid)
 
-        return ResponseEntity.ok(3)
+            val group = GroupInfos(
+                groupName = groupInfo.group_name,
+                groupDescription = groupInfo.group_description,
+                groupAdminId = user.id!!,
+                privacy = groupInfo.privacy
+            )
+            groupInfoRepository.save(group)
+            val groupMember = GroupMembers(
+                groupId = group.id,
+                userId = user.id
+            )
+            groupMemberRepository.save(groupMember)
+            return ResponseEntity.ok(mapOf(
+                "groupName" to group.groupName,
+                "groupDescription" to group.groupDescription,
+                "groupAdmin" to group.groupAdminId,
+                "groupPrivacy" to group.privacy,
+                "groupAvatar" to group.groupAvatar,
+            ))
+        } catch (e: Exception) {
+            ResponseEntity.badRequest().body(null)
+        }
+    }
+
+    @GetMapping("/search-groups")
+    fun searchGroups(@RequestParam query: String,
+                     @RequestParam(defaultValue = "0") page: Int,
+                     @RequestParam(defaultValue = "10") size: Int,
+                     request: HttpServletRequest): ResponseEntity<Page<GroupInfos>> {
+        val uid = firebaseService.getUidFromFirebaseToken(request = request)
+        val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+        val pageable = PageRequest.of(page, size)
+        val resultsPage = groupInfoRepository.findPublicGroupsByName(query, pageable)
+        return ResponseEntity.ok(resultsPage)
     }
 
     @PostMapping("/create-user")

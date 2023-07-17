@@ -1,7 +1,10 @@
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
+import styles from 'styles/CreateAccount.module.css'
 import { useAuthState, useSignOut } from 'react-firebase-hooks/auth';
+import { Formik, Field, Form, ErrorMessage } from 'formik';
 import { auth } from "@/firebase_creds";
+import ErrorModal from "@/components/ErrorModal";
 
 
 type Movie = {
@@ -15,6 +18,13 @@ type Movie = {
     liked: boolean;
 }
 
+interface CreateGroupFormValues {
+    group_name: string;
+    group_description?: string;
+    privacy_level?: string;
+    group_avatar?: string;
+}
+
 type MovieProps = {
     movie: Movie;
 };
@@ -22,6 +32,45 @@ type MovieProps = {
 type SearchResultsListProps = {
     movies: Movie[];
 }
+
+type Group = {
+    id: number;
+    groupAvatar: string;
+    groupDescription: string;
+    privacy: string;
+    groupName: string;
+}
+
+interface GroupProps {
+    group: Group;
+}
+
+function Group({ group }: GroupProps) {
+    return (
+        <div>
+            <h1>Group Name: {group.groupName}</h1>
+            <h2>Group Description: {group.groupDescription}</h2>
+            <h2>Privacy: {group.privacy}</h2>
+            <img src={group.groupAvatar} alt="Group Avatar"/>
+        </div>
+    );
+}
+
+interface GroupListProps {
+    groups: Group[];
+}
+
+function GroupList({ groups }: GroupListProps) {
+    return (
+        <div>
+            {groups.map((group: Group) => (
+                <Group key={group.id} group={group} />
+            ))}
+        </div>
+    );
+}
+
+
 
 function SignOut() {
     const [signOut, loading, error] = useSignOut(auth);
@@ -137,9 +186,16 @@ export default function Dashboard() {
     const [username, setUsername] = useState<string | null>(null);
     const [movieInfos, setMovieInfos] = useState([])
     const [searchQuery, setSearchQuery] = useState('');
+    const [searchGroupsQuery, setSearchGroupsQuery] = useState('');
     const [signedURL, setSignedURL] = useState<string>('');
     const [user, loading, error] = useAuthState(auth)
     const [likedMovies, setLikedMovies] = useState<Movie[]>([]);
+    const [groupInfos, setGroupInfos] = useState([]);
+
+    const [showCreateGroupForm, setShowCreateGroupForm] = useState(false);
+    const [errorModalOpen, setErrorModalOpen] = useState(false);
+    const [errorMsg, setErrorMsg] = useState({code: '', msg: ''})
+
 
     const userPrevious = useRef();
 
@@ -165,8 +221,29 @@ export default function Dashboard() {
         setSearchQuery(event.target.value);
     };
 
-    const handleCreateGroupClick = (event: React.MouseEvent) => {
+    const handleSearchGroupsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchGroupsQuery(event.target.value);
+    };
+
+    const handleCreateGroupClick = async (event: React.MouseEvent) => {
         event.preventDefault()
+
+        if (!user) {
+            console.error("User is not authenticated");
+            return;
+        }
+        setShowCreateGroupForm(true);
+
+        // const idToken = await user.getIdToken(true);
+        // const response = await fetch('http://127.0.0.1:8081/movies/like-movie', {
+        //     method: 'POST',
+        //     headers: {
+        //         'Authorization': 'Bearer ' + idToken,
+        //         'Content-Type': 'application/json'
+        //     },
+        //     body: JSON.stringify({movieId: movie.id})
+        // });
+
     }
 
     const getSignedUrl = async (): Promise<string> => {
@@ -214,6 +291,20 @@ export default function Dashboard() {
         if (!response.ok) {
             throw new Error(`Upload failed: ${response.status}`);
         }
+
+        if (!user) {
+            console.error("User is not authenticated");
+            return;
+        }
+        const idToken = await user.getIdToken(true);
+        const response1 = await fetch(`http://127.0.0.1:8081/avatar/user/get-signed-url`, {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + idToken
+            }
+        });
+        const res1 = await response1.json()
+        setSignedURL(res1.signedUrl)
     }
 
 
@@ -222,6 +313,8 @@ export default function Dashboard() {
         console.log("Liked movies button clicked!"); // replace with actual implementation
 
         setMovieInfos([]); // Clear the current search results
+        setShowCreateGroupForm(false); // Hide the form
+
 
         if (!user) {
             console.error("User is not authenticated");
@@ -246,7 +339,9 @@ export default function Dashboard() {
 
     const handleSearchSubmit = async (event: React.ChangeEvent<HTMLFormElement>) => {
         event.preventDefault();
+        setGroupInfos([]);
         setLikedMovies([]); // Clear the current liked movies
+        setShowCreateGroupForm(false); // Hide the form
 
         if (!user) {
             console.error("User is not authenticated");
@@ -254,7 +349,7 @@ export default function Dashboard() {
         }
 
         const idToken = await user.getIdToken(true);
-        const response = await fetch(`http://127.0.0.1:8081/movies/search-movies?query=${searchQuery}`,{
+        const response = await fetch(`http://127.0.0.1:8081/movies/search-movies?query=${searchQuery}`, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken,
@@ -270,8 +365,37 @@ export default function Dashboard() {
         setMovieInfos(data.content)
     };
 
+    const handleSearchGroupsSubmit = async (event: React.ChangeEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        setMovieInfos([])
+        setLikedMovies([]); // Clear the current liked movies
+        setShowCreateGroupForm(false); // Hide the form
+
+        if (!user) {
+            console.error("User is not authenticated");
+            return;
+        }
+
+        const idToken = await user.getIdToken(true);
+        const response = await fetch(`http://127.0.0.1:8081/search-groups?query=${searchGroupsQuery}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + idToken,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!response.ok) {
+            console.error("Server response:", response.status, response.statusText);
+            return;
+        }
+        const data = await response.json();
+        console.log("data:", data.content);
+        setGroupInfos(data.content)
+    };
+
     let attempts = 0
     const handleRefreshSignedURL = async () => {
+        console.log("refresh")
         if (attempts >= 3) {  // only try to refresh the URL up to 3 times
             console.error('Failed to load image after 3 attempts');
             attempts = 0
@@ -293,8 +417,263 @@ export default function Dashboard() {
 
         const res = await response.json()
 
-        setSignedURL(res.signedURL)
+        console.log("su", res.signedUrl)
+
+        setSignedURL(res.signedUrl)
     }
+
+    const handleSubmitCreateGroupClick = async (values: CreateGroupFormValues) => {
+        try {
+            if (!user) {
+                console.error("User is not authenticated");
+                return;
+            }
+            const idToken = await user.getIdToken(true);
+
+            console.log("create group form vals", JSON.stringify(values))
+
+            if ('group_avatar' ! in values) { // @ts-ignore
+                values.group_avatar = null
+            }
+
+            console.log("create group form vals", JSON.stringify(values))
+
+            const response = await fetch('http://127.0.0.1:8081/create-group', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + idToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(values),
+            });
+            const res = await response.json()
+
+            console.log("created group ", res)
+
+            // setErrorMsg({
+            //     code: '',
+            //     msg: ''
+            // });
+
+        } catch (error) {
+            console.error('An error occurred:', error);
+        }
+        // if (error) {
+        //     setErrorModalOpen(true);
+        //     // @ts-ignore
+        //     setErrorMsg({
+        //         code: error.code,
+        //         msg: error.message,
+        //     });
+        // }
+    }
+
+//     if (!loading && user) {
+//         if (groupInfos.length > 0) {
+//             return (
+//                 <div>
+//                     <h1 style={{fontSize: '50px'}}>Search Groups Results</h1>
+//                     <GroupList groups={groupInfos}/>
+//                 </div>
+//             )
+//         } else if (showCreateGroupForm) {
+//             // Render your form here
+//             return (
+//                 <div>
+//
+//                     <Formik
+//                         initialValues={{
+//                             group_name: '',
+//                             group_description: '',
+//                             privacy: 'public',
+//                             group_avatar: undefined
+//                         }}
+//                         validateOnChange={false}
+//                         validateOnBlur={false}
+//                         validate={(values) => {
+//                             const errors: Partial<CreateGroupFormValues> = {};
+//                             if (!values.group_name) errors.group_name = 'Required';
+//                             return errors;
+//                         }}
+//                         onSubmit={
+//                             async (values, {setSubmitting}) => {
+//                                 await handleSubmitCreateGroupClick(values);
+//                                 setSubmitting(false);
+//                             }
+//                         }
+//                     >
+//                         {({isSubmitting, setFieldValue}) => (
+//                             <Form style={{marginRight: '500px'}}>
+//                                 <div>
+//                                     <div className={styles.title}>Create Group</div>
+//                                     <label className={styles.label} htmlFor="group_name">Group Name</label>
+//                                     <Field
+//                                         placeholder="Group Name"
+//                                         id="group_name"
+//                                         name="group_name"
+//                                         required/>
+//                                     <ErrorMessage name="group_name" component="div"/>
+//                                 </div>
+//
+//                                 <div>
+//                                     <label className={styles.label} htmlFor="group_description">Group
+//                                         Description</label>
+//                                     <Field
+//                                         id="group_description"
+//                                         name="group_description"
+//                                         placeholder="Group Description"
+//                                     />
+//                                     <ErrorMessage name="group_description" component="div"/>
+//                                 </div>
+//
+//                                 <div>
+//                                     <label className={styles.label} htmlFor="privacy">Privacy Level</label>
+//                                     <Field style={{width: '40%', height: '30px',}} as="select" name="privacy">
+//                                         <option value="public">Public</option>
+//                                         <option value="private">Private</option>
+//                                     </Field>
+//                                     <ErrorMessage name="privacy" component="div" className={styles.error}/>
+//                                 </div>
+//
+//                                 <div>
+//                                     <label className={styles.label} htmlFor="group_avatar">Group Avatar</label>
+//                                     <input
+//                                         id="group_avatar"
+//                                         name="group_avatar"
+//                                         type="file"
+//                                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+//                                             if (event.currentTarget.files && event.currentTarget.files.length > 0) {
+//                                                 const file = event.currentTarget.files[0];
+//                                                 setFieldValue('group_avatar', file);
+//                                             } else {
+//                                                 setFieldValue('group_avatar', null);
+//                                             }
+//                                         }}
+//                                     />
+//                                     <ErrorMessage name="group_avatar" component="div"/>
+//                                 </div>
+//
+//                                 <div className={styles.signupWrapper}>
+//                                     <button type="submit" disabled={isSubmitting}>
+//                                         {isSubmitting ? "Loading..." : "Submit"}
+//                                     </button>
+//                                 </div>
+//
+//                             </Form>
+//                         )}
+//                     </Formik>
+//                 </div>
+//             )
+//         } else {
+//             return (
+//                 <div style={{display: 'flex', justifyContent: 'space-between'}}>
+//                     <div style={{marginRight: '20px'}}>
+//                         {/*...*/}
+//                         <h1>
+//                             {user.email}
+//                         </h1>
+//                         <div>
+//                             {signedURL.length > 0 ? (
+//                                 <><img
+//                                     src={signedURL}
+//                                     onError={handleRefreshSignedURL}
+//                                     alt="Profile Pic"
+//                                     style={{width: "100px", height: "100px"}}/></>
+//                             ) : (
+//                                 <></>
+//                             )}
+//                         </div>
+//                         <form onSubmit={handleSearchSubmit}>
+//                             <input
+//                                 type="text"
+//                                 value={searchQuery}
+//                                 onChange={handleSearchChange}
+//                                 placeholder="Search for movies..."
+//                             />
+//                             <div>
+//                                 <button type="submit">
+//                                     Search for Movies
+//                                 </button>
+//                             </div>
+//                             <div>
+//                                 <button onClick={handleCreateGroupClick}>
+//                                     Create Group
+//                                 </button>
+//                             </div>
+//                             <div>
+//                                 <h2>
+//                                     <label
+//                                         htmlFor="fileInput"
+//                                         className="custom-file-upload"
+//                                         style={{cursor: "pointer", textDecoration: "underline", color: "blue"}}
+//                                     >
+//                                         Upload a Profile Pic
+//                                     </label>
+//                                 </h2>
+//                                 <input
+//                                     type="file"
+//                                     id="fileInput"
+//                                     accept="image/jpeg"
+//                                     onChange={handleUpdateProfileAvatar}
+//                                     style={{display: 'none'}}/>
+//                             </div>
+//                             <div>
+//                                 <button onClick={handleLikedMoviesClick}>
+//                                     Liked Movies
+//                                 </button>
+//                             </div>
+//                             {/*<div>*/}
+//                             {/*    <button onClick={handleLogOut}>*/}
+//                             {/*        Log Out*/}
+//                             {/*    </button>*/}
+//                             {/*</div>*/}
+//                         </form>
+//
+//                         <form onSubmit={handleSearchGroupsSubmit}>
+//                             <input
+//                                 type="text"
+//                                 value={searchGroupsQuery}
+//                                 onChange={handleSearchGroupsChange}
+//                                 placeholder="Search for groups..."
+//                             />
+//                             <div>
+//                                 <button type="submit">
+//                                     Search for Groups
+//                                 </button>
+//                             </div>
+//                             <SignOut/>
+//                         </form>
+//                     </div>
+//                     <div>
+//                         {likedMovies.length > 0 ? (
+//                             <>
+//                                 <h1>Liked Movies</h1>
+//                                 <SearchResultsList movies={likedMovies}/>
+//                             </>
+//                         ) : (
+//                             <>
+//                                 <h1>{movieInfos.length > 0 ? 'Search Results' : ''}</h1>
+//                                 <SearchResultsList movies={movieInfos}/>
+//                             </>
+//                         )}
+//                     </div>
+//                 </div>
+//             );
+//         }
+//     } else if (loading) {
+//         return (
+//             <div>
+//                 <h1>loading..</h1>
+//             </div>
+//         )
+//     } else {
+//         return (
+//             <div>
+//                 <h1>signed out</h1>
+//             </div>
+//         )
+//     }
+// }
 
     if (!loading && user) {
         return (
@@ -304,9 +683,9 @@ export default function Dashboard() {
                         {user.email}
                     </h1>
                     <div>
-                        {typeof router.query.signedURL === 'string' && router.query.signedURL.length > 0 ? (
+                        {signedURL.length > 0 ? (
                             <><img
-                                src={router.query.signedURL}
+                                src={signedURL}
                                 onError={handleRefreshSignedURL}
                                 alt="Profile Pic"
                                 style={{width: "100px", height: "100px"}}/></>
@@ -322,7 +701,9 @@ export default function Dashboard() {
                             placeholder="Search for movies..."
                         />
                         <div>
-                            <button type="submit">Search</button>
+                            <button type="submit">
+                                Search for Movies
+                            </button>
                         </div>
                         <div>
                             <button onClick={handleCreateGroupClick}>
@@ -351,27 +732,149 @@ export default function Dashboard() {
                                 Liked Movies
                             </button>
                         </div>
-                        <SignOut/>
                         {/*<div>*/}
                         {/*    <button onClick={handleLogOut}>*/}
                         {/*        Log Out*/}
                         {/*    </button>*/}
                         {/*</div>*/}
                     </form>
+
+                    <form onSubmit={handleSearchGroupsSubmit}>
+                        <input
+                            type="text"
+                            value={searchGroupsQuery}
+                            onChange={handleSearchGroupsChange}
+                            placeholder="Search for groups..."
+                        />
+                        <div>
+                            <button type="submit">
+                                Search for Groups
+                            </button>
+                        </div>
+                        <SignOut/>
+                    </form>
+
                 </div>
 
                 <div>
-                    {likedMovies.length > 0 ? (
-                        <>
-                            <h1>Liked Movies</h1>
-                            <SearchResultsList movies={likedMovies}/>
-                        </>
+                    {showCreateGroupForm ? (
+                        <></> // Do not show any search results list when the form is being shown
                     ) : (
                         <>
-                            <h1>{movieInfos.length > 0 ? 'Search Results' : ''}</h1>
-                            <SearchResultsList movies={movieInfos}/>
+                            {likedMovies.length > 0 ? (
+                                <>
+                                    <h1>Liked Movies</h1>
+                                    <SearchResultsList movies={likedMovies}/>
+                                </>
+                            ) : movieInfos.length > 0 ? (
+                                <>
+                                    <h1>{movieInfos.length > 0 ? 'Search Results' : ''}</h1>
+                                    <SearchResultsList movies={movieInfos}/>
+                                </>
+                            ) : groupInfos.length >0 ? (
+                                <div>
+                                    <h1 style={{fontSize: '50px'}}>Search Groups Results</h1>
+                                    <GroupList groups={groupInfos}/>
+                                </div>
+                            ) : null}
                         </>
                     )}
+                </div>
+
+
+                <div>
+                {showCreateGroupForm ? (
+                    // Render your form here. You might want to create a new Formik form similar to the one in your login page.
+                    <div>
+
+                            <Formik
+                                initialValues={{
+                                    group_name: '',
+                                    group_description: '',
+                                    privacy: 'public',
+                                    group_avatar: undefined
+                                }}
+                                validateOnChange={false}
+                                validateOnBlur={false}
+                                validate={(values) => {
+                                    const errors: Partial<CreateGroupFormValues> = {};
+                                    if (!values.group_name) errors.group_name = 'Required';
+                                    return errors;
+                                }}
+                                onSubmit={
+                                    async (values, { setSubmitting }) => {
+                                        await handleSubmitCreateGroupClick(values);
+                                        setSubmitting(false);
+                                    }
+                                }
+                            >
+                                {({ isSubmitting, setFieldValue }) => (
+                                    <Form style={{ marginRight: '500px' }}>
+                                        <div>
+                                            <div className={styles.title}>Create Group</div>
+                                            <label className={styles.label} htmlFor="group_name">Group Name</label>
+                                            <Field
+                                                placeholder="Group Name"
+                                                id="group_name"
+                                                name="group_name"
+                                                required />
+                                            <ErrorMessage name="group_name" component="div" />
+                                        </div>
+
+                                        <div>
+                                            <label className={styles.label} htmlFor="group_description">Group Description</label>
+                                            <Field
+                                                id="group_description"
+                                                name="group_description"
+                                                placeholder="Group Description"
+                                            />
+                                            <ErrorMessage name="group_description" component="div" />
+                                        </div>
+
+                                        <div>
+                                            <label className={styles.label} htmlFor="privacy">Privacy Level</label>
+                                            <Field style={{width: '40%', height: '30px', }} as="select" name="privacy">
+                                                <option value="public">Public</option>
+                                                <option value="private">Private</option>
+                                            </Field>
+                                            <ErrorMessage name="privacy" component="div" className={styles.error} />
+                                        </div>
+
+                                        <div>
+                                            <label className={styles.label} htmlFor="group_avatar">Group Avatar</label>
+                                            <input
+                                                id="group_avatar"
+                                                name="group_avatar"
+                                                type="file"
+                                                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                                    if (event.currentTarget.files && event.currentTarget.files.length > 0) {
+                                                        const file = event.currentTarget.files[0];
+                                                        setFieldValue('group_avatar', file);
+                                                    } else {
+                                                        setFieldValue('group_avatar', null);
+                                                    }
+                                                }}
+                                            />
+                                            <ErrorMessage name="group_avatar" component="div" />
+                                        </div>
+
+                                        <div className={styles.signupWrapper}>
+                                            <button type="submit" disabled={isSubmitting}>
+                                                {isSubmitting ? "Loading..." : "Submit"}
+                                            </button>
+                                        </div>
+
+                                    </Form>
+                                )}
+                            </Formik>
+                    </div>
+
+
+                ) : (
+                    <>
+                        {/* The rest of your component's content goes here */}
+                    </>
+                )}
                 </div>
 
             </div>

@@ -12,6 +12,12 @@
     margin-top: 1rem;
 }
 
+.formField {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
 .error {
     display: inline-block;
     color: red;
