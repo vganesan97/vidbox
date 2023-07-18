@@ -56,7 +56,7 @@ const Group = ({ group }: GroupProps) =>  {
             }
         });
         const res = await response.json()
-        console.log("created group ", res)
+        console.log("joined group ", res)
     }
 
     return (
@@ -64,7 +64,7 @@ const Group = ({ group }: GroupProps) =>  {
             <h1>Group Name: {group.groupName}</h1>
             <h2>Group Description: {group.groupDescription}</h2>
             <h2>Privacy: {group.privacy}</h2>
-            <h2>asdfas: {group.isMember ? 'true' : 'false'}</h2>
+            <h2>Member: {group.isMember ? 'true' : 'false'}</h2>
             <div style={{display: 'flex', alignItems: 'center'}}>
                 <img
                     src={group.groupAvatar}

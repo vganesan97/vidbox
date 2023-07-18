@@ -262,25 +262,43 @@ class HomeController(private val userRepository: UserRepository,
     fun joinGroup(@PathVariable groupId: Int, request: HttpServletRequest): ResponseEntity<Any> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+        var gm: GroupMembers
         try {
-            val groupMember = GroupMembers(groupId, userId)
+            println("group id: $groupId, user id: $userId")
+            val groupMember = GroupMembers(
+                groupId = groupId,
+                userId = userId
+            )
             groupMemberRepository.save(groupMember)
+            return ResponseEntity.ok(groupMember)
         } catch (e: Exception) {
             throw e
         }
-        return ResponseEntity.ok("user: $userId is a member of group: $groupId")
     }
 
     @GetMapping("/get-groups")
     fun getGroups(request: HttpServletRequest,
                   @RequestParam(defaultValue = "0") page: Int,
-                  @RequestParam(defaultValue = "10") size: Int): ResponseEntity<Page<GroupInfos>> {
+                  @RequestParam(defaultValue = "10") size: Int): ResponseEntity<Any> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
         try {
             val pageable = PageRequest.of(page, size)
             val resultsPage = groupInfoRepository.findGroupsByUserId(userId, pageable)
-            return ResponseEntity.ok(resultsPage)
+
+            val x = resultsPage.map { pg ->
+                if (pg.groupAvatar != null) {
+                    pg.groupAvatar = refreshGroupAvatarSignedURL(pg).toString()
+                } else {
+                    pg.groupAvatar = "https://cdn.britannica.com/39/7139-050-A88818BB/Himalayan-chocolate-point.jpg"
+                }
+
+                val groupInfosMap = pg.javaClass.kotlin.memberProperties.associateBy { it.name }.mapValues { it.value.get(pg) }
+                val response = groupInfosMap.toMutableMap()
+                response["isMember"] = groupInfoRepository.isUserInGroup(userId, pg.id!!) // add your additional field here
+                response
+            }
+            return ResponseEntity.ok(x)
         } catch (e: Exception) {
             throw e
         }

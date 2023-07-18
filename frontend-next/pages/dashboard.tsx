@@ -205,6 +205,35 @@ export default function Dashboard() {
         }
     };
 
+    const handleGetGroupsClick = async (event: React.MouseEvent) => {
+        event.preventDefault(); // prevent form submit
+        console.log("get groups button clicked!"); // replace with actual implementation
+
+        setMovieInfos([]); // Clear the current search results
+        setGroupInfos([])
+        setShowCreateGroupForm(false); // Hide the form
+
+        if (!user) {
+            console.error("User is not authenticated");
+            return;
+        }
+        const idToken = await user.getIdToken(true);
+        const response = await fetch('http://127.0.0.1:8081/get-groups', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + idToken,
+                'Content-Type': 'application/json'
+            }
+        })
+        if (response.ok) {
+            const res = await response.json();
+            console.log('user groups:', res);
+            setGroupInfos(res.content); // Add the liked movies to the state
+        } else {
+            console.error(`Error: ${response.status}`);
+        }
+    };
+
     const handleSearchSubmit = async (event: React.ChangeEvent<HTMLFormElement>) => {
         event.preventDefault();
         setGroupInfos([]);
@@ -494,6 +523,11 @@ if (!loading && user) {
                         <div>
                             <button onClick={handleLikedMoviesClick}>
                                 Liked Movies
+                            </button>
+                        </div>
+                        <div>
+                            <button onClick={handleGetGroupsClick}>
+                                Groups
                             </button>
                         </div>
                     </form>
