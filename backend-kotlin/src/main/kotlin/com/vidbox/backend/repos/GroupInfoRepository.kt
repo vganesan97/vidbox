@@ -28,4 +28,26 @@ interface GroupInfoRepository : JpaRepository<GroupInfos, Int> {
         nativeQuery = true)
     fun findLastGroupInfoByUserId(userId: Int): GroupInfos?
 
+    @Query(
+        value = """SELECT g.*
+           FROM group_infos g 
+           INNER JOIN group_members gm ON g.id = gm.group_id
+           WHERE gm.user_id = :userId""",
+        countQuery = """SELECT count(*) 
+                FROM group_infos g 
+                INNER JOIN group_members gm ON g.id = gm.group_id
+                WHERE gm.user_id = :userId""",
+        nativeQuery = true)
+    fun findGroupsByUserId(userId: Int, pageable: Pageable): Page<GroupInfos>
+
+    @Query(
+        value = """SELECT EXISTS (
+               SELECT 1 
+               FROM group_members gm 
+               WHERE gm.user_id = :userId 
+               AND gm.group_id = :groupId)""",
+        nativeQuery = true)
+    fun isUserInGroup(userId: Int, groupId: Int): Boolean
+
+
 }

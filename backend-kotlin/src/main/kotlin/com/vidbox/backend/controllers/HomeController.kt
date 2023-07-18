@@ -25,6 +25,7 @@ import java.time.LocalDate
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletRequest
+import kotlin.reflect.full.memberProperties
 
 
 data class AvatarGroupOrUserId(val groupId: Int?, val userId: Int?)
@@ -208,37 +209,81 @@ class HomeController(private val userRepository: UserRepository,
     fun searchGroups(@RequestParam query: String,
                      @RequestParam(defaultValue = "0") page: Int,
                      @RequestParam(defaultValue = "10") size: Int,
-                     request: HttpServletRequest): ResponseEntity<Page<GroupInfos>> {
+                     request: HttpServletRequest): ResponseEntity<Any> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
         val pageable = PageRequest.of(page, size)
         val resultsPage = groupInfoRepository.findPublicGroupsByName(query, pageable)
-        resultsPage.forEach {
-            if (it.groupAvatar != null) {
-                it.groupAvatar = refreshGroupAvatarSignedURL(it).toString()
+
+        val x = resultsPage.map { pg ->
+            if (pg.groupAvatar != null) {
+                pg.groupAvatar = refreshGroupAvatarSignedURL(pg).toString()
             } else {
-                it.groupAvatar = "https://cdn.britannica.com/39/7139-050-A88818BB/Himalayan-chocolate-point.jpg"
+                pg.groupAvatar = "https://cdn.britannica.com/39/7139-050-A88818BB/Himalayan-chocolate-point.jpg"
             }
+
+            val groupInfosMap = pg.javaClass.kotlin.memberProperties.associateBy { it.name }.mapValues { it.value.get(pg) }
+            val response = groupInfosMap.toMutableMap()
+            response["isMember"] = groupInfoRepository.isUserInGroup(userId, pg.id!!) // add your additional field here
+            response
         }
-        return ResponseEntity.ok(resultsPage)
+
+        return ResponseEntity.ok(x)
     }
 
     @GetMapping("/search-groups-get-last")
     fun searchGroupsGetLast(@RequestParam query: String,
                             @RequestParam(defaultValue = "0") page: Int,
                             @RequestParam(defaultValue = "10") size: Int,
-                            request: HttpServletRequest): ResponseEntity<GroupInfos> {
+                            request: HttpServletRequest): ResponseEntity<Any> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
         val lastCreatedGroup = groupInfoRepository.findLastGroupInfoByUserId(userId)
-        return lastCreatedGroup?.let {
+        val x = lastCreatedGroup?.let {
             if (it.groupAvatar != null) {
                 it.groupAvatar = refreshGroupAvatarSignedURL(it).toString()
             } else {
                 it.groupAvatar = "https://cdn.britannica.com/39/7139-050-A88818BB/Himalayan-chocolate-point.jpg"
             }
-            ResponseEntity.ok(it)
-        } ?: ResponseEntity.status(HttpStatus.NO_CONTENT).build()
+            it
+        } ?: throw NullPointerException()
+
+        // Convert the GroupInfos object to a map
+        val groupInfosMap = x.javaClass.kotlin.memberProperties.associateBy { it.name }.mapValues { it.value.get(x) }
+
+        // Create a new map with the additional field
+        val response = groupInfosMap.toMutableMap()
+        response["isMember"] = groupInfoRepository.isUserInGroup(userId, x.id!!) // add your additional field here
+
+        return ResponseEntity.ok(response)
+    }
+
+    @PostMapping("/join-group/{groupId}")
+    fun joinGroup(@PathVariable groupId: Int, request: HttpServletRequest): ResponseEntity<Any> {
+        val uid = firebaseService.getUidFromFirebaseToken(request = request)
+        val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+        try {
+            val groupMember = GroupMembers(groupId, userId)
+            groupMemberRepository.save(groupMember)
+        } catch (e: Exception) {
+            throw e
+        }
+        return ResponseEntity.ok("user: $userId is a member of group: $groupId")
+    }
+
+    @GetMapping("/get-groups")
+    fun getGroups(request: HttpServletRequest,
+                  @RequestParam(defaultValue = "0") page: Int,
+                  @RequestParam(defaultValue = "10") size: Int): ResponseEntity<Page<GroupInfos>> {
+        val uid = firebaseService.getUidFromFirebaseToken(request = request)
+        val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+        try {
+            val pageable = PageRequest.of(page, size)
+            val resultsPage = groupInfoRepository.findGroupsByUserId(userId, pageable)
+            return ResponseEntity.ok(resultsPage)
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
     @PostMapping("/create-user")

@@ -9,20 +9,17 @@ type Group = {
     groupDescription: string;
     privacy: string;
     groupName: string;
+    isMember: boolean;
 }
 
 interface GroupProps {
     group: Group;
 }
 
-const joinGroup = () => {
-
-}
-
 const Group = ({ group }: GroupProps) =>  {
     const [groupSignedURL, setGroupSignedURL] = useState<string>('');
     const [user, loading, error] = useAuthState(auth)
-
+    console.log("group", group)
     let attempts = 0
     const handleRefreshGroupAvatarSignedURL = async (groupInfoId: Number) => {
         console.log("refresh")
@@ -45,11 +42,29 @@ const Group = ({ group }: GroupProps) =>  {
         setGroupSignedURL(res.signedUrl)
     }
 
+    const joinGroup = async () => {
+        if (!user) {
+            console.error("User is not authenticated");
+            return;
+        }
+        const idToken = await user.getIdToken(true);
+        const response = await fetch(`http://127.0.0.1:8081/join-group/${group.id}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + idToken,
+                'Content-Type': 'application/json'
+            }
+        });
+        const res = await response.json()
+        console.log("created group ", res)
+    }
+
     return (
         <div>
             <h1>Group Name: {group.groupName}</h1>
             <h2>Group Description: {group.groupDescription}</h2>
             <h2>Privacy: {group.privacy}</h2>
+            <h2>asdfas: {group.isMember ? 'true' : 'false'}</h2>
             <div style={{display: 'flex', alignItems: 'center'}}>
                 <img
                     src={group.groupAvatar}
@@ -57,9 +72,7 @@ const Group = ({ group }: GroupProps) =>  {
                     alt="Group Avatar"
                     style={{width: "100px", height: "100px"}}
                 />
-                <button onClick={joinGroup}>
-                    Join Group
-                </button>
+                {!group.isMember && <button onClick={joinGroup}>Join Group</button>}
             </div>
         </div>
     );
