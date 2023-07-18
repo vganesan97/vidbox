@@ -19,4 +19,13 @@ interface GroupInfoRepository : JpaRepository<GroupInfos, Int> {
         nativeQuery = true)
     fun findPublicGroupsByName(query: String, pageable: Pageable): Page<GroupInfos>
 
+    @Query(
+        value = """SELECT g.*
+           FROM group_infos g 
+           WHERE g.group_admin_id = :userId 
+           ORDER BY g.created_at DESC 
+           LIMIT 1""",
+        nativeQuery = true)
+    fun findLastGroupInfoByUserId(userId: Int): GroupInfos?
+
 }

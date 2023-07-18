@@ -197,14 +197,8 @@ class HomeController(private val userRepository: UserRepository,
                 userId = user.id
             )
             groupMemberRepository.save(groupMember)
-            return ResponseEntity.ok(mapOf(
-                "groupId" to group.id,
-                "groupName" to group.groupName,
-                "groupDescription" to group.groupDescription,
-                "groupAdmin" to group.groupAdminId,
-                "groupPrivacy" to group.privacy,
-                "groupAvatar" to group.groupAvatar,
-            ))
+            println("group: ${group}")
+            return ResponseEntity.ok(group)
         } catch (e: Exception) {
             ResponseEntity.badRequest().body(null)
         }
@@ -227,6 +221,24 @@ class HomeController(private val userRepository: UserRepository,
             }
         }
         return ResponseEntity.ok(resultsPage)
+    }
+
+    @GetMapping("/search-groups-get-last")
+    fun searchGroupsGetLast(@RequestParam query: String,
+                            @RequestParam(defaultValue = "0") page: Int,
+                            @RequestParam(defaultValue = "10") size: Int,
+                            request: HttpServletRequest): ResponseEntity<GroupInfos> {
+        val uid = firebaseService.getUidFromFirebaseToken(request = request)
+        val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+        val lastCreatedGroup = groupInfoRepository.findLastGroupInfoByUserId(userId)
+        return lastCreatedGroup?.let {
+            if (it.groupAvatar != null) {
+                it.groupAvatar = refreshGroupAvatarSignedURL(it).toString()
+            } else {
+                it.groupAvatar = "https://cdn.britannica.com/39/7139-050-A88818BB/Himalayan-chocolate-point.jpg"
+            }
+            ResponseEntity.ok(it)
+        } ?: ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
     @PostMapping("/create-user")

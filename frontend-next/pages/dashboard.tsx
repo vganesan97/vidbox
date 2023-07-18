@@ -184,7 +184,6 @@ export default function Dashboard() {
         setMovieInfos([]); // Clear the current search results
         setShowCreateGroupForm(false); // Hide the form
 
-
         if (!user) {
             console.error("User is not authenticated");
             return;
@@ -234,8 +233,19 @@ export default function Dashboard() {
         setMovieInfos(data.content)
     };
 
-    const handleSearchGroupsSubmit = async (event: React.ChangeEvent<HTMLFormElement>) => {
-        event.preventDefault();
+    const handleSearchGroupsSubmit = async (event: React.ChangeEvent<HTMLFormElement> | string) => {
+        if (typeof event === 'string') {
+            console.log("event", event)
+            setSearchGroupsQuery(event as string)
+            //setSearchGroupsQuery([event]); // Use the provided group name
+            console.log("event type", typeof event)
+            console.log("event search query", searchGroupsQuery)
+        } else {
+            event.preventDefault();
+        }
+
+        //setSearchGroupsQuery("cv")
+        setGroupInfos([])
         setMovieInfos([])
         setLikedMovies([]); // Clear the current liked movies
         setShowCreateGroupForm(false); // Hide the form
@@ -246,20 +256,40 @@ export default function Dashboard() {
         }
 
         const idToken = await user.getIdToken(true);
-        const response = await fetch(`http://127.0.0.1:8081/search-groups?query=${searchGroupsQuery}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + idToken,
-                'Content-Type': 'application/json'
+
+        let data: any
+
+        if (typeof event === 'string') {
+            console.log("type string")
+            const response = await fetch(`http://127.0.0.1:8081/search-groups-get-last?query=${event}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + idToken,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                console.error("Server response:", response.status, response.statusText);
+                return;
             }
-        });
-        if (!response.ok) {
-            console.error("Server response:", response.status, response.statusText);
-            return;
+            data = await response.json();
+            setGroupInfos([data])
+        } else {
+            const response = await fetch(`http://127.0.0.1:8081/search-groups?query=${searchGroupsQuery}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + idToken,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                console.error("Server response:", response.status, response.statusText);
+                return;
+            }
+            data = await response.json();
+            setGroupInfos(data.content)
         }
-        const data = await response.json();
-        console.log("data:", data.content);
-        setGroupInfos(data.content)
+        setGroupAvatarFile('')
     };
 
     let attempts = 0
@@ -316,6 +346,7 @@ export default function Dashboard() {
         console.log(values, "vals")
         values.group_avatar = ""
         let groupId = -1
+        let resj : any
         try {
             if (!user) {
                 console.error("User is not authenticated");
@@ -333,10 +364,11 @@ export default function Dashboard() {
             const res = await response.json()
             console.log("created group ", res)
 
-            groupId = res.groupId
+            groupId = res.id
+            resj = res
             // Clear the error message if there was one
             //setError(null);
-            console.log("created group ", res.groupId)
+            console.log("created group ", res.id)
             console.log("group avatar file", groupAvatarFile)
             console.log("create group form vals", JSON.stringify(values))
         } catch (error) {
@@ -346,33 +378,65 @@ export default function Dashboard() {
             return;
         }
 
-        if (!groupAvatarFile) return;
+        if (groupAvatarFile) {
+            // If the group creation was successful, proceed with uploading the avatar
+            try {
+                //await uploadAvatar(values.avatar, groupId);
+                const signedUrl = await getGroupAvatarPutSignedUrl(groupId)
+                const response = await fetch(signedUrl, {
+                    method: 'PUT',
+                    body: groupAvatarFile,
+                    headers: {
+                        'Content-Type': 'image/jpeg' // Important: the content type should match the one you specified when generating the signed URL
+                    }
+                });
 
-        // If the group creation was successful, proceed with uploading the avatar
-        try {
-            //await uploadAvatar(values.avatar, groupId);
-            const signedUrl = await getGroupAvatarPutSignedUrl(groupId)
-            const response = await fetch(signedUrl, {
-                method: 'PUT',
-                body: groupAvatarFile,
-                headers: {
-                    'Content-Type': 'image/jpeg' // Important: the content type should match the one you specified when generating the signed URL
+                if (!response.ok) {
+                    throw new Error(`Upload failed: ${response.status}`);
                 }
-            });
+            } catch (error) {
+                console.error('Failed to upload avatar:', error);
+                // Show an error message to the user
+                //setError('Failed to upload avatar. Please try again.');
 
-            if (!response.ok) {
-                throw new Error(`Upload failed: ${response.status}`);
+                // Optionally, delete the group since the avatar upload failed
+                //deleteGroup(groupId);
             }
-
-            // Show a success message or redirect the user to the new group page
-        } catch (error) {
-            console.error('Failed to upload avatar:', error);
-            // Show an error message to the user
-            //setError('Failed to upload avatar. Please try again.');
-
-            // Optionally, delete the group since the avatar upload failed
-            //deleteGroup(groupId);
         }
+
+        // if (!user) {
+        //     console.error("User is not authenticated");
+        //     return;
+        // }
+        //
+        // console.log("group name search query", resj.groupName)
+        // const idToken = await user.getIdToken(true);
+        // const response2 = await fetch(`http://127.0.0.1:8081/search-groups?query=${resj.groupName}`, {
+        //     method: 'GET',
+        //     headers: {
+        //         'Authorization': 'Bearer ' + idToken,
+        //         'Content-Type': 'application/json'
+        //     }
+        // });
+        // if (!response2.ok) {
+        //     console.error("Server response:", response2.status, response2.statusText);
+        //     return;
+        // }
+        // const data = await response2.json();
+        //
+        // //setGroupInfos((prevGroupInfos) => [...prevGroupInfos, data.content]);
+        //
+        // setGroupInfos([data.content[data.content.length-1]])
+        // console.log("data create groups query:", data.content[data.content.length-1]);
+        //
+        //
+        //
+        // console.log("group infos after create", searchGroupsQuery)
+
+
+        // After successful group creation and avatar upload, refresh the group list.
+        // Here, we're calling the search groups function with a fake event to simulate a form submission.
+        await handleSearchGroupsSubmit(resj.groupName);
     }
 
 if (!loading && user) {
@@ -498,6 +562,7 @@ if (!loading && user) {
                                 }}
                                 onSubmit={
                                     async (values, { setSubmitting }) => {
+
                                         await handleCreateGroup(values);
                                         setSubmitting(false);
                                     }
