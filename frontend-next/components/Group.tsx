@@ -19,7 +19,6 @@ interface GroupProps {
 const Group = ({ group }: GroupProps) =>  {
     const [groupSignedURL, setGroupSignedURL] = useState<string>('');
     const [user, loading, error] = useAuthState(auth)
-    console.log("group", group)
     let attempts = 0
     const handleRefreshGroupAvatarSignedURL = async (groupInfoId: Number) => {
         console.log("refresh")
