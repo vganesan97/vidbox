@@ -1,6 +1,7 @@
 import {auth} from "@/firebase_creds";
 import { useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import ImageComponent from "@/components/ImageComponent";
 
 type Movie = {
     id: number;
@@ -77,9 +78,15 @@ const Movie = ({ movie }: MovieProps) => {
                     onClick={(event: React.MouseEvent) => handleLike(event)}
                     className="like-button">{isLiked ? '❤️' : '♡'}️</button>
             </div>
-            <img src={`${imgUrl}${movie.poster_path}`}
-                 alt={movie.title}
-                 style={{width: "200px", height: "300px"}}/>
+            <ImageComponent
+                user={{}}
+                src={`${imgUrl}${movie.poster_path}`}
+                alt={movie.title}
+                fromMovie={true}/>
+
+            {/*<img src={`${imgUrl}${movie.poster_path}`}*/}
+            {/*     alt={movie.title}*/}
+            {/*     style={{width: "200px", height: "300px"}}/>*/}
             <p><b>{movie.overview}</b></p>
         </div>
     );

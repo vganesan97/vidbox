@@ -1,7 +1,7 @@
-import styles from 'styles/CreateAccount.module.css'
-import { useState, useEffect, useRef } from 'react';
+import { useState} from 'react';
 import {auth} from "@/firebase_creds";
 import { useAuthState } from 'react-firebase-hooks/auth';
+import ImageComponent from "@/components/ImageComponent";
 
 type Group = {
     id: number;
@@ -65,12 +65,13 @@ const Group = ({ group }: GroupProps) =>  {
             <h2>Privacy: {group.privacy}</h2>
             <h2>Member: {group.isMember ? 'true' : 'false'}</h2>
             <div style={{display: 'flex', alignItems: 'center'}}>
-                <img
-                    src={group.groupAvatar}
-                    onError={() => handleRefreshGroupAvatarSignedURL(group.id)}
-                    alt="Group Avatar"
-                    style={{width: "100px", height: "100px"}}
-                />
+                <ImageComponent user={{}} src={group.groupAvatar} alt={"Group Avatar"}/>
+                {/*<img*/}
+                {/*    src={group.groupAvatar}*/}
+                {/*    onError={() => handleRefreshGroupAvatarSignedURL(group.id)}*/}
+                {/*    alt="Group Avatar"*/}
+                {/*    style={{width: "100px", height: "100px"}}*/}
+                {/*/>*/}
                 {!group.isMember && <button onClick={joinGroup}>Join Group</button>}
             </div>
         </div>

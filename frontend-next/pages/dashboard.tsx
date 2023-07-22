@@ -8,6 +8,7 @@ import Movie from "@/components/Movie";
 import SearchResultsList from "@/components/SearchResultsList";
 import GroupList from "@/components/GroupList";
 import SignOut from "@/components/SignOut";
+import ImageComponent from "@/components/ImageComponent";
 
 export default function Dashboard() {
     const router = useRouter();
@@ -210,6 +211,7 @@ export default function Dashboard() {
         console.log("get groups button clicked!"); // replace with actual implementation
 
         setMovieInfos([]); // Clear the current search results
+        setLikedMovies([])
         setGroupInfos([])
         setShowCreateGroupForm(false); // Hide the form
 
@@ -262,7 +264,7 @@ export default function Dashboard() {
         setMovieInfos(data.content)
     };
 
-    const handleSearchGroupsSubmit = async (event: React.ChangeEvent<HTMLFormElement> | string) => {
+    const handleSearchGroupsSubmit = async (event: React.FormEvent<HTMLFormElement> | string) => {
         if (typeof event === 'string') {
             console.log("event", event)
             setSearchGroupsQuery(event as string)
@@ -302,6 +304,7 @@ export default function Dashboard() {
                 return;
             }
             data = await response.json();
+            // @ts-ignore
             setGroupInfos([data])
         } else {
             const response = await fetch(`http://127.0.0.1:8081/search-groups?query=${searchGroupsQuery}`, {
@@ -318,6 +321,7 @@ export default function Dashboard() {
             data = await response.json();
             setGroupInfos(data.content)
         }
+        // @ts-ignore
         setGroupAvatarFile('')
     };
 
@@ -433,43 +437,16 @@ export default function Dashboard() {
             }
         }
 
-        // if (!user) {
-        //     console.error("User is not authenticated");
-        //     return;
-        // }
-        //
-        // console.log("group name search query", resj.groupName)
-        // const idToken = await user.getIdToken(true);
-        // const response2 = await fetch(`http://127.0.0.1:8081/search-groups?query=${resj.groupName}`, {
-        //     method: 'GET',
-        //     headers: {
-        //         'Authorization': 'Bearer ' + idToken,
-        //         'Content-Type': 'application/json'
-        //     }
-        // });
-        // if (!response2.ok) {
-        //     console.error("Server response:", response2.status, response2.statusText);
-        //     return;
-        // }
-        // const data = await response2.json();
-        //
-        // //setGroupInfos((prevGroupInfos) => [...prevGroupInfos, data.content]);
-        //
-        // setGroupInfos([data.content[data.content.length-1]])
-        // console.log("data create groups query:", data.content[data.content.length-1]);
-        //
-        //
-        //
-        // console.log("group infos after create", searchGroupsQuery)
-
-
         // After successful group creation and avatar upload, refresh the group list.
         // Here, we're calling the search groups function with a fake event to simulate a form submission.
         await handleSearchGroupsSubmit(resj.groupName);
     }
 
 if (!loading && user) {
-        return (
+        // @ts-ignore
+    // @ts-ignore
+    // @ts-ignore
+    return (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div style={{ marginRight: '20px' }}>
                     <h1>
@@ -477,11 +454,16 @@ if (!loading && user) {
                     </h1>
                     <div>
                         {signedURL.length > 0 ? (
-                            <><img
-                                src={signedURL}
-                                onError={handleRefreshProfileAvatarSignedURL}
-                                alt="Profile Pic"
-                                style={{width: "100px", height: "100px"}}/></>
+                            <>
+                                <ImageComponent user={user} src={signedURL} alt={"Group Avatar"}/>
+
+                                {/*<img*/}
+                                {/*    src={signedURL}*/}
+                                {/*    onError={handleRefreshProfileAvatarSignedURL}*/}
+                                {/*    alt="Profile Pic"*/}
+                                {/*    style={{width: "100px", height: "100px"}}*/}
+                                {/*/>*/}
+                            </>
                         ) : (
                             <></>
                         )}

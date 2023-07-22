@@ -1,18 +1,27 @@
+import React from 'react';
 import Movie from "@/components/Movie";
+import useAllImagesLoaded from "@/hooks/useAllImagesLoaded";
 
-type SearchResultsListProps = {
+interface SearchResultsListProps {
     movies: Movie[];
 }
 
-const SearchResultsList = ({ movies }: SearchResultsListProps) => {
-    return (
-        <div>
-            {movies.map((movie: Movie) => (
-                // Pass the entire post object as a prop to the Post component
-                <Movie key={movie.id} movie={movie}/>
-            ))}
-        </div>
-    );
+const SearchResultsList: React.FC<SearchResultsListProps> = ({ movies }) => {
+    const allImagesLoaded = useAllImagesLoaded(movies);
+
+    if (!allImagesLoaded) {
+        return <div>Loading...</div>; // or return null or a spinner component
+    }
+    else{
+        return (
+            <div>
+                {movies.map(movie => (
+                    <Movie key={movie.id} movie={movie} />
+                ))}
+            </div>
+        );
+    }
+
 }
 
-export default SearchResultsList
+export default SearchResultsList;
