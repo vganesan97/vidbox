@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletRequest
 
 @Service
 class FirebaseService {
-    val filePath = "backend-kotlin/vidbox-7d2c1-firebase-adminsdk-akp4p-f90c0efd75.json"
+    val filePath = "/app/vidbox-7d2c1-firebase-adminsdk-akp4p-f90c0efd75.json"
     val serviceAccount = FileInputStream(filePath)
     val options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(serviceAccount))

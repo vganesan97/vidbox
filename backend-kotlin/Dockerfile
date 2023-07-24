@@ -10,11 +10,12 @@ WORKDIR /home/gradle/src
 # Run the build task
 RUN gradle bootJar --no-daemon
 
-# Use the official OpenJDK image as a base image
 FROM openjdk:17-jdk-slim
 
 # Copy the jar file from the builder image
 COPY --from=builder /home/gradle/src/build/libs/*.jar /app/app.jar
+
+COPY ./vidbox-7d2c1-firebase-adminsdk-akp4p-f90c0efd75.json /app/vidbox-7d2c1-firebase-adminsdk-akp4p-f90c0efd75.json
 
 # Expose port 8080 (or whatever port your app uses)
 EXPOSE 8080

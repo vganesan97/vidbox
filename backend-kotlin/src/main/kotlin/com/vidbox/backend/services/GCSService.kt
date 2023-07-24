@@ -34,7 +34,7 @@ class GCSService(private val userRepository: UserRepository,
     fun signedUrlHelper(objectName: String): Pair<Storage, BlobInfo> {
         val projectId = "vidbox-7d2c1"
         val bucketName = "avatar_pictures"
-        val filePath = "/backend-kotlin/vidbox-7d2c1-firebase-adminsdk-akp4p-f90c0efd75.json"
+        val filePath = "/app/vidbox-7d2c1-firebase-adminsdk-akp4p-f90c0efd75.json"
         val serviceAccount = FileInputStream(filePath)
         val storage = StorageOptions.newBuilder()
             .setCredentials(GoogleCredentials.fromStream(serviceAccount))
