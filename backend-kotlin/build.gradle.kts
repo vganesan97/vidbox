@@ -21,14 +21,18 @@ dependencies {
 	runtimeOnly("org.postgresql:postgresql")
 	implementation(platform("com.google.cloud:libraries-bom:25.1.0"))
 	implementation("com.google.cloud:google-cloud-storage")
+	implementation("com.google.guava:guava:31.1-jre")
 	implementation("com.google.firebase:firebase-admin:9.2.0")
 	implementation("org.springframework.boot:spring-boot-devtools")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
+	implementation("com.google.cloud.sql:postgres-socket-factory:1.13.1")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
+
+
 
 tasks.withType<KotlinCompile> {
 	kotlinOptions {

@@ -49,6 +49,13 @@ class HomeController(private val userRepository: UserRepository,
                      private val firebaseService: FirebaseService,
                      private val gcsService: GCSService) {
 
+    @GetMapping("/test")
+    fun getAllMovies(): Any {
+        return """
+            <h1> hi hows it goin </h1>
+        """.trimIndent()
+    }
+
     @GetMapping("/avatar/user/put-signed-url")
     fun getPutProfileAvatarSignedURL(request: HttpServletRequest): ResponseEntity<GCSSignedURL> {
         return try {

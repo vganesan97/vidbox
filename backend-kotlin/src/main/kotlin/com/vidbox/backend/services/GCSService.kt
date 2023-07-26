@@ -34,7 +34,7 @@ class GCSService(private val userRepository: UserRepository,
     fun signedUrlHelper(objectName: String): Pair<Storage, BlobInfo> {
         val projectId = "vidbox-7d2c1"
         val bucketName = "avatar_pictures"
-        val filePath = "/app/vidbox-7d2c1-firebase-adminsdk-akp4p-f90c0efd75.json"
+        val filePath = "vidbox-7d2c1-firebase-adminsdk-akp4p-f90c0efd75.json"
         val serviceAccount = FileInputStream(filePath)
         val storage = StorageOptions.newBuilder()
             .setCredentials(GoogleCredentials.fromStream(serviceAccount))
@@ -127,7 +127,7 @@ class GCSService(private val userRepository: UserRepository,
     @Throws(InvalidKeyException::class, NoSuchAlgorithmException::class)
     fun signedGetURL(objectPath: String): String? {
         val keyName = "vidbox-avatarss"
-        val keyPath = "backend-kotlin/cdn-signing-key.txt"
+        val keyPath = "cdn-signing-key.txt"
         //val requestUrl = "http://34.149.119.30/groups/2d4e9a7d-1f48-483a-9afd-3c5740c9c0bc"
         val requestUrl = "http://34.149.119.30/${objectPath}"
 
