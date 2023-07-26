@@ -32,7 +32,7 @@ const Group = ({ group }: GroupProps) =>  {
             console.error("User is not authenticated");
             return;
         }
-        const response = await fetch(`http://127.0.0.1:8081/avatar/group/${groupInfoId}/get-signed-url`, {
+        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/group/${groupInfoId}/get-signed-url`, {
             method: 'GET'
         });
 

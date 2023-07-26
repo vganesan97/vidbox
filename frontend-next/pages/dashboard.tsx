@@ -82,7 +82,7 @@ export default function Dashboard() {
         }
 
         const idToken = await user.getIdToken(true);
-        const response = await fetch(`http://127.0.0.1:8081/avatar/user/put-signed-url`, {
+        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/user/put-signed-url`, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken
@@ -106,7 +106,7 @@ export default function Dashboard() {
         }
 
         //const idToken = await user.getIdToken(true);
-        const response = await fetch(`http://127.0.0.1:8081/avatar/group/${groupInfoId}/get-signed-url`, {
+        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/group/${groupInfoId}/get-signed-url`, {
             method: 'GET'
         });
         const res = await response.json()
@@ -128,7 +128,7 @@ export default function Dashboard() {
             throw new Error("user not logged in or authorized");
         }
 
-        const response = await fetch(`http://127.0.0.1:8081/avatar/group/${groupId}/put-signed-url`, {
+        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/group/${groupId}/put-signed-url`, {
             method: 'GET',
         });
 
@@ -168,7 +168,7 @@ export default function Dashboard() {
             return;
         }
         const idToken = await user.getIdToken(true);
-        const response1 = await fetch(`http://127.0.0.1:8081/avatar/user/get-signed-url`, {
+        const response1 = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/user/get-signed-url`, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken
@@ -190,7 +190,7 @@ export default function Dashboard() {
             return;
         }
         const idToken = await user.getIdToken(true);
-        const response = await fetch('http://127.0.0.1:8081/movies/liked-movies', {
+        const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/movies/liked-movies', {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken,
@@ -220,7 +220,7 @@ export default function Dashboard() {
             return;
         }
         const idToken = await user.getIdToken(true);
-        const response = await fetch('http://127.0.0.1:8081/get-groups', {
+        const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/get-groups', {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken,
@@ -248,7 +248,7 @@ export default function Dashboard() {
         }
 
         const idToken = await user.getIdToken(true);
-        const response = await fetch(`http://127.0.0.1:8081/movies/search-movies?query=${searchQuery}`, {
+        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/movies/search-movies?query=${searchQuery}`, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken,
@@ -292,7 +292,7 @@ export default function Dashboard() {
 
         if (typeof event === 'string') {
             console.log("type string")
-            const response = await fetch(`http://127.0.0.1:8081/search-groups-get-last?query=${event}`, {
+            const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/search-groups-get-last?query=${event}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + idToken,
@@ -307,7 +307,7 @@ export default function Dashboard() {
             // @ts-ignore
             setGroupInfos([data])
         } else {
-            const response = await fetch(`http://127.0.0.1:8081/search-groups?query=${searchGroupsQuery}`, {
+            const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/search-groups?query=${searchGroupsQuery}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + idToken,
@@ -340,7 +340,7 @@ export default function Dashboard() {
         }
 
         const idToken = await user.getIdToken(true);
-        const response = await fetch(`http://127.0.0.1:8081/avatar/user/get-signed-url`, {
+        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/user/get-signed-url`, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken
@@ -365,7 +365,7 @@ export default function Dashboard() {
             console.error("User is not authenticated");
             return;
         }
-        const response = await fetch(`http://127.0.0.1:8081/avatar/group/${groupInfoId}/get-signed-url`, {
+        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/group/${groupInfoId}/get-signed-url`, {
             method: 'GET'
         });
 
@@ -386,7 +386,7 @@ export default function Dashboard() {
                 return;
             }
             const idToken = await user.getIdToken(true);
-            const response = await fetch('http://127.0.0.1:8081/create-group', {
+            const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/create-group', {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Bearer ' + idToken,
