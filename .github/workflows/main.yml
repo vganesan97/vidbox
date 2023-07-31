@@ -24,3 +24,9 @@ jobs:
         with:
           working_directory: backend-kotlin
           deliverables: app.yaml
+
+      - name: Cleanup old versions
+        run: |
+          gcloud app versions list --service default --format 'value(id)' --sort-by '~version' \
+          | tail -n +2 \
+          | xargs gcloud app versions delete --service default
