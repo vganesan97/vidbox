@@ -3,7 +3,7 @@ name: Deploy to Google App Enine
 on:
   push:
     branches:
-      - main
+      - origin/main
     paths:
       - 'backend-kotlin/**'
 
