@@ -6,6 +6,7 @@ import com.vidbox.backend.entities.GroupInfos
 import com.vidbox.backend.entities.User
 import com.vidbox.backend.repos.GroupInfoRepository
 import com.vidbox.backend.repos.UserRepository
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.io.FileInputStream
 import java.net.MalformedURLException
@@ -25,13 +26,16 @@ import javax.crypto.spec.SecretKeySpec
 
 @Service
 class GCSService(private val userRepository: UserRepository,
-                 private val groupInfoRepository: GroupInfoRepository) {
+                 private val groupInfoRepository: GroupInfoRepository,
+                 @Value("\${cdn.keypath}") private val keyPath: String,
+                 @Value("\${firebase.filepath}") private val firebaseFilePath: String) {
 
     @Throws(java.lang.Exception::class)
     //@JvmStatic
     fun finalSignedPrefixUrl(): String {
         val keyName = "vidbox-avatarss"
-        val keyPath = "backend-kotlin/cdn-signing-key.txt"
+
+        val keyPath = keyPath
         // The date that the signed URL expires.
         val expirationTime = ZonedDateTime.now().plusDays(1).toEpochSecond()
         // URL of request
@@ -94,7 +98,7 @@ class GCSService(private val userRepository: UserRepository,
     fun signedUrlHelper(objectName: String): Pair<Storage, BlobInfo> {
         val projectId = "vidbox-7d2c1"
         val bucketName = "avatar_pictures"
-        val filePath = "backend-kotlin/vidbox-7d2c1-firebase-adminsdk-akp4p-f90c0efd75.json"
+        val filePath = firebaseFilePath
         val serviceAccount = FileInputStream(filePath)
         val storage = StorageOptions.newBuilder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
@@ -187,7 +191,7 @@ class GCSService(private val userRepository: UserRepository,
     @Throws(InvalidKeyException::class, NoSuchAlgorithmException::class)
     fun signedGetURL(objectPath: String): String? {
         val keyName = "vidbox-avatarss"
-        val keyPath = "backend-kotlin/cdn-signing-key.txt"
+        val keyPath = keyPath
         //val requestUrl = "http://34.149.119.30/groups/2d4e9a7d-1f48-483a-9afd-3c5740c9c0bc"
 
         //http

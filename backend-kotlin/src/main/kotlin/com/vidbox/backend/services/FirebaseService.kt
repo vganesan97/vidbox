@@ -5,6 +5,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
@@ -12,9 +13,9 @@ import java.io.FileInputStream
 import javax.servlet.http.HttpServletRequest
 
 @Service
-class FirebaseService {
+class FirebaseService(@Value("\${firebase.filepath}") private val firebaseFilePath: String) {
 
-    val filePath = "backend-kotlin/vidbox-7d2c1-firebase-adminsdk-akp4p-f90c0efd75.json"
+    val filePath = firebaseFilePath
     val serviceAccount = FileInputStream(filePath)
     val options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
