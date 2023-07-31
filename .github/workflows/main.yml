@@ -1,39 +1,25 @@
-name: Deploy to Google App Engine
+name: Deploy to App Engine
 
 on:
   push:
     branches:
       - main
-#    paths:
-#      - 'backend-kotlin/**'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Setup Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+      - name: Setup Google Cloud
+        uses: google-github-actions/auth@v1
         with:
-          version: '290.0.1'
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+            working_directory: backend-kotlin
+            credentials_json: ${{ secrets.GCP_SA_KEY }}
+            service_account: 'test-892@vidbox-7d2c1.iam.gserviceaccount.com
+'
 
-      - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v0.4.0
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Deploy to Google App Engine
+      - name: Deploy to App Engine
         uses: google-github-actions/deploy-appengine@v1
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          deliverables: backend-kotlin/app.yaml
-
-      - name: Cleanup old versions
-        run: |
-          gcloud app versions list --service default --format 'value(id)' --sort-by '~version' \
-          | tail -n +2 \
-          | xargs gcloud app versions delete --service default
