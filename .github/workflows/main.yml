@@ -13,12 +13,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Setup Google Cloud
-        uses: google-github-actions/auth@v1
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v1'
         with:
-            credentials_json: ${{ secrets.GCP_SA_KEY }}
-            service_account: 'test-892@vidbox-7d2c1.iam.gserviceaccount.com
-'
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          service_account: 'test-892@vidbox-7d2c1.iam.gserviceaccount.com'
 
       - name: Deploy to App Engine
         uses: google-github-actions/deploy-appengine@v1.2.7
