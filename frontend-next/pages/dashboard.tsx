@@ -532,17 +532,17 @@ if (!loading && user) {
                         <>
                             {likedMovies.length > 0 ? (
                                 <>
-                                    <h1>Liked Movies</h1>
+                                    <h1><u>Liked Movies</u></h1>
                                     <SearchResultsList movies={likedMovies}/>
                                 </>
                             ) : movieInfos.length > 0 ? (
                                 <>
-                                    <h1>{movieInfos.length > 0 ? 'Search Results' : ''}</h1>
+                                    <h1><u>{movieInfos.length > 0 ? 'Search Results' : ''}</u></h1>
                                     <SearchResultsList movies={movieInfos}/>
                                 </>
                             ) : groupInfos.length >0 ? (
                                 <>
-                                    <h1>Search Groups Results</h1>
+                                    <h1><u>Liked Movies</u></h1>
                                     <GroupList groups={groupInfos}/>
                                 </>
                             ) : null}
