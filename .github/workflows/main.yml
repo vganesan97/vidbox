@@ -21,4 +21,6 @@ jobs:
 
       - name: Deploy to App Engine
         uses: google-github-actions/deploy-appengine@v1.2.7
-
+        with:
+          working_directory: backend-kotlin
+          deliverables: app.yaml
