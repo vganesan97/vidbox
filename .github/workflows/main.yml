@@ -1,0 +1,38 @@
+name: Deploy to Google App Engine
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend-kotlin/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy to Google App Engine
+        run: |
+          cd backend-kotlin
+          gcloud app deploy app.yaml
+
+#      - name: Run Flyway Migrations
+#        run: |
+#          cd backend-kotlin
+#          gradle flywayMigrate
+
+      - name: Cleanup old versions
+        run: |
+          gcloud app versions list --service default --format 'value(id)' --sort-by '~version' \
+          | tail -n +2 \
+          | xargs gcloud app versions delete --service default
