@@ -2,18 +2,13 @@ package com.vidbox.backend.services
 
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.storage.*
-import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseOptions
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthException
 import com.vidbox.backend.entities.GroupInfos
 import com.vidbox.backend.entities.User
 import com.vidbox.backend.repos.GroupInfoRepository
 import com.vidbox.backend.repos.UserRepository
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
-import org.springframework.web.server.ResponseStatusException
 import java.io.FileInputStream
+import java.net.MalformedURLException
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -27,9 +22,74 @@ import java.util.concurrent.TimeUnit
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
+
 @Service
 class GCSService(private val userRepository: UserRepository,
                  private val groupInfoRepository: GroupInfoRepository) {
+
+    @Throws(java.lang.Exception::class)
+    //@JvmStatic
+    fun finalSignedPrefixUrl(): String {
+        val keyName = "vidbox-avatarss"
+        val keyPath = "cdn-signing-key.txt"
+        // The date that the signed URL expires.
+        val expirationTime = ZonedDateTime.now().plusDays(1).toEpochSecond()
+        // URL of request
+        val requestUrl = "https://media.example.com/videos/id/main.m3u8?userID=abc123&starting_profile=1"
+        // URL prefix to sign as a string. URL prefix must start with either "http://" or "https://"
+        // and must not include query parameters.
+        val urlPrefix = "https://media.example.com/videos/"
+
+        // Read the key as a base64 url-safe encoded string, then convert to byte array.
+        // Key used in signing must be in raw form (not base64url-encoded).
+        val base64String = String(Files.readAllBytes(Paths.get(keyPath)),
+                StandardCharsets.UTF_8)
+        val keyBytes = Base64.getUrlDecoder().decode(base64String)
+
+        // Sign the url with prefix
+        val signUrlWithPrefixResult = signUrlWithPrefix(requestUrl,
+                urlPrefix, keyBytes, keyName, expirationTime)
+        println(signUrlWithPrefixResult)
+        return signUrlWithPrefixResult
+    }
+
+
+    // Creates a signed URL with a URL prefix for a Cloud CDN endpoint with the given key. Prefixes
+    // allow access to any URL with the same prefix, and can be useful for granting access broader
+    // content without signing multiple URLs.
+    @Throws(InvalidKeyException::class, NoSuchAlgorithmException::class)
+    fun signUrlWithPrefix(requestUrl: String, urlPrefix: String, key: ByteArray, keyName: String,
+                          expirationTime: Long): String {
+
+        // Validate input URL prefix.
+        try {
+            val validatedUrlPrefix = URL(urlPrefix)
+            require(validatedUrlPrefix.protocol.startsWith("http")) { "urlPrefix must start with either http:// or https://: $urlPrefix" }
+            require(validatedUrlPrefix.query == null) { "urlPrefix must not include query params: $urlPrefix" }
+        } catch (e: MalformedURLException) {
+            throw IllegalArgumentException("urlPrefix malformed: $urlPrefix")
+        }
+        val encodedUrlPrefix = Base64.getUrlEncoder().encodeToString(urlPrefix.toByteArray(
+                StandardCharsets.UTF_8))
+        val urlToSign = ("URLPrefix=" + encodedUrlPrefix
+                + "&Expires=" + expirationTime
+                + "&KeyName=" + keyName)
+        val encoded = getSignatureForUrl(key, urlToSign)
+        return "$requestUrl&$urlToSign&Signature=$encoded"
+    }
+
+    // Creates signature for input url with private key.
+    @Throws(InvalidKeyException::class, NoSuchAlgorithmException::class)
+    private fun getSignatureForUrl(privateKey: ByteArray, input: String): String {
+        val algorithm = "HmacSHA1"
+        val offset = 0
+        val key: Key = SecretKeySpec(privateKey, offset, privateKey.size, algorithm)
+        val mac = Mac.getInstance(algorithm)
+        mac.init(key)
+        return Base64.getUrlEncoder()
+                .encodeToString(mac.doFinal(input.toByteArray(StandardCharsets.UTF_8)))
+    }
+
 
     fun signedUrlHelper(objectName: String): Pair<Storage, BlobInfo> {
         val projectId = "vidbox-7d2c1"
@@ -37,15 +97,15 @@ class GCSService(private val userRepository: UserRepository,
         val filePath = "vidbox-7d2c1-firebase-adminsdk-akp4p-f90c0efd75.json"
         val serviceAccount = FileInputStream(filePath)
         val storage = StorageOptions.newBuilder()
-            .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-            .setProjectId(projectId)
-            .build().service
+                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                .setProjectId(projectId)
+                .build().service
         return Pair(
-            storage,
-            BlobInfo.newBuilder(BlobId.of(bucketName, objectName))
-                .setContentType("image/jpeg")
-                .setCacheControl("public, max-age=3600")
-                .build()
+                storage,
+                BlobInfo.newBuilder(BlobId.of(bucketName, objectName))
+                        .setContentType("image/jpeg")
+                        .setCacheControl("public, max-age=3600")
+                        .build()
         )
     }
 
@@ -55,12 +115,12 @@ class GCSService(private val userRepository: UserRepository,
         val extensionHeaders: MutableMap<String, String> = HashMap()
         extensionHeaders["Content-Type"] = "image/jpeg"
         return storage.signUrl(
-            blobInfo,
-            7,
-            TimeUnit.DAYS,
-            Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
-            Storage.SignUrlOption.withExtHeaders(extensionHeaders),
-            Storage.SignUrlOption.withV4Signature()
+                blobInfo,
+                7,
+                TimeUnit.DAYS,
+                Storage.SignUrlOption.httpMethod(HttpMethod.PUT),
+                Storage.SignUrlOption.withExtHeaders(extensionHeaders),
+                Storage.SignUrlOption.withV4Signature()
         )
     }
 
@@ -129,7 +189,15 @@ class GCSService(private val userRepository: UserRepository,
         val keyName = "vidbox-avatarss"
         val keyPath = "cdn-signing-key.txt"
         //val requestUrl = "http://34.149.119.30/groups/2d4e9a7d-1f48-483a-9afd-3c5740c9c0bc"
-        val requestUrl = "http://34.149.119.30/${objectPath}"
+
+        //http
+        //val requestUrl = "http://34.149.119.30/${objectPath}"
+
+        //https
+        //val requestUrl = "https://34.36.255.17/${objectPath}"
+
+        //https
+        val requestUrl = "https://vidbox1.xyz/${objectPath}"
 
 
         //val unixTime = expirationTime.time / 1000
@@ -138,8 +206,8 @@ class GCSService(private val userRepository: UserRepository,
                 + "Expires=" + ZonedDateTime.now().plusDays(1).toEpochSecond()
                 + "&KeyName=" + keyName)
         val base64String = String(
-            Files.readAllBytes(Paths.get(keyPath)),
-            StandardCharsets.UTF_8
+                Files.readAllBytes(Paths.get(keyPath)),
+                StandardCharsets.UTF_8
         )
         val keyBytes = Base64.getUrlDecoder().decode(base64String)
         val encoded: String = getSignature(keyBytes, urlToSign)!!
@@ -157,5 +225,4 @@ class GCSService(private val userRepository: UserRepository,
         mac.init(key)
         return Base64.getUrlEncoder().encodeToString(mac.doFinal(input.toByteArray()))
     }
-
 }

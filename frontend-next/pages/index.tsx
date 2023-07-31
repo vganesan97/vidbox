@@ -50,7 +50,7 @@ export default function Home() {
             const userCredential = await signInWithEmailAndPassword(values.username, values.password);
             if (userCredential == null) return
             const idToken = await userCredential.user.getIdToken(true);
-            const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/login', {
+            const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/user/login', {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Bearer ' + idToken,

@@ -47,7 +47,7 @@ const Group = ({ group }: GroupProps) =>  {
             return;
         }
         const idToken = await user.getIdToken(true);
-        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/join-group/${group.id}`, {
+        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/group/join-group/${group.id}`, {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + idToken,

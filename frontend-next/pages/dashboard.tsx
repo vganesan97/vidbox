@@ -175,6 +175,7 @@ export default function Dashboard() {
             }
         });
         const res1 = await response1.json()
+        console.log(res1)
         setSignedURL(res1.signedUrl)
     }
 
@@ -220,7 +221,7 @@ export default function Dashboard() {
             return;
         }
         const idToken = await user.getIdToken(true);
-        const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/get-groups', {
+        const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/group/get-groups', {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken,
@@ -292,7 +293,7 @@ export default function Dashboard() {
 
         if (typeof event === 'string') {
             console.log("type string")
-            const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/search-groups-get-last?query=${event}`, {
+            const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/group/search-groups-get-last?query=${event}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + idToken,
@@ -307,7 +308,7 @@ export default function Dashboard() {
             // @ts-ignore
             setGroupInfos([data])
         } else {
-            const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/search-groups?query=${searchGroupsQuery}`, {
+            const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/group/search-groups?query=${searchGroupsQuery}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + idToken,
@@ -386,7 +387,7 @@ export default function Dashboard() {
                 return;
             }
             const idToken = await user.getIdToken(true);
-            const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/create-group', {
+            const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/group/create-group', {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Bearer ' + idToken,
@@ -447,7 +448,7 @@ if (!loading && user) {
     // @ts-ignore
     // @ts-ignore
     return (
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex'}}>
                 <div style={{ marginRight: '20px' }}>
                     <h1>
                         {user.email}
@@ -456,13 +457,6 @@ if (!loading && user) {
                         {signedURL.length > 0 ? (
                             <>
                                 <ImageComponent user={user} src={signedURL} alt={"Group Avatar"}/>
-
-                                {/*<img*/}
-                                {/*    src={signedURL}*/}
-                                {/*    onError={handleRefreshProfileAvatarSignedURL}*/}
-                                {/*    alt="Profile Pic"*/}
-                                {/*    style={{width: "100px", height: "100px"}}*/}
-                                {/*/>*/}
                             </>
                         ) : (
                             <></>
@@ -547,10 +541,10 @@ if (!loading && user) {
                                     <SearchResultsList movies={movieInfos}/>
                                 </>
                             ) : groupInfos.length >0 ? (
-                                <div>
-                                    <h1 style={{fontSize: '50px'}}>Search Groups Results</h1>
+                                <>
+                                    <h1>Search Groups Results</h1>
                                     <GroupList groups={groupInfos}/>
-                                </div>
+                                </>
                             ) : null}
                         </>
                     )}
