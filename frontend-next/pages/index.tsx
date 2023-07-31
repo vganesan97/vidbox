@@ -50,6 +50,7 @@ export default function Home() {
             const userCredential = await signInWithEmailAndPassword(values.username, values.password);
             if (userCredential == null) return
             const idToken = await userCredential.user.getIdToken(true);
+            console.log("base url", process.env.NEXT_PUBLIC_API_BASE_URL)
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/login`, {
                 method: 'POST',
                 headers: {
