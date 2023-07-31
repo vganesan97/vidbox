@@ -16,7 +16,6 @@ jobs:
       - name: Setup Google Cloud
         uses: google-github-actions/auth@v1
         with:
-            working_directory: backend-kotlin
             deliverables: backend-kotlin/app.yaml
             credentials_json: ${{ secrets.GCP_SA_KEY }}
             service_account: 'test-892@vidbox-7d2c1.iam.gserviceaccount.com
