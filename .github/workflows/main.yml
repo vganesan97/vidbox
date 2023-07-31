@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - origin/main
-    paths:
-      - 'backend-kotlin/**'
+#    paths:
+#      - 'backend-kotlin/**'
 
 jobs:
   deploy:
