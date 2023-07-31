@@ -58,7 +58,7 @@ export default function CreateAccount() {
             // Handle if user creation is successful
             if (userCredential) {
                 values.idToken = await userCredential.user.getIdToken(true);
-                const response = await fetch('http://127.0.0.1:8081/create-user', {
+                const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/user/create-user', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(values),

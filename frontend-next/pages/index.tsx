@@ -50,7 +50,7 @@ export default function Home() {
             const userCredential = await signInWithEmailAndPassword(values.username, values.password);
             if (userCredential == null) return
             const idToken = await userCredential.user.getIdToken(true);
-            const response = await fetch('http://127.0.0.1:8081/login', {
+            const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/user/login', {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Bearer ' + idToken,
@@ -61,7 +61,7 @@ export default function Home() {
 
             const res = await response.json()
 
-            const response1 = await fetch(`http://127.0.0.1:8081/avatar/user/get-signed-url`, {
+            const response1 = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/user/get-signed-url`, {
                 method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + idToken

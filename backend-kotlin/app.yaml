@@ -1,0 +1,10 @@
+runtime: java17 # or another supported version
+
+handlers:
+  - url: /stylesheets
+    static_dir: stylesheets
+
+  - url: /.*
+    secure: always
+    redirect_http_response_code: 301
+    script: auto

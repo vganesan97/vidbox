@@ -12,7 +12,7 @@ class VidboxBackendApplication {
 	fun corsConfigurer(): WebMvcConfigurer {
 		return object : WebMvcConfigurer {
 			override fun addCorsMappings(registry: CorsRegistry) {
-				registry.addMapping("/**").allowedOrigins("http://localhost:3001")
+				registry.addMapping("/**").allowedOrigins("http://localhost:3001", "https://vidbox-frontend.vercel.app")
 			}
 		}
 	}
