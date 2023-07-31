@@ -82,7 +82,7 @@ export default function Dashboard() {
         }
 
         const idToken = await user.getIdToken(true);
-        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/user/put-signed-url`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/user/put-signed-url`, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken
@@ -106,7 +106,7 @@ export default function Dashboard() {
         }
 
         //const idToken = await user.getIdToken(true);
-        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/group/${groupInfoId}/get-signed-url`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/group/${groupInfoId}/get-signed-url`, {
             method: 'GET'
         });
         const res = await response.json()
@@ -128,7 +128,7 @@ export default function Dashboard() {
             throw new Error("user not logged in or authorized");
         }
 
-        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/group/${groupId}/put-signed-url`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/group/${groupId}/put-signed-url`, {
             method: 'GET',
         });
 
@@ -168,7 +168,7 @@ export default function Dashboard() {
             return;
         }
         const idToken = await user.getIdToken(true);
-        const response1 = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/user/get-signed-url`, {
+        const response1 = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/user/get-signed-url`, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken
@@ -191,7 +191,7 @@ export default function Dashboard() {
             return;
         }
         const idToken = await user.getIdToken(true);
-        const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/movies/liked-movies', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/movies/liked-movies`, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken,
@@ -221,7 +221,7 @@ export default function Dashboard() {
             return;
         }
         const idToken = await user.getIdToken(true);
-        const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/group/get-groups', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/group/get-groups`, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken,
@@ -249,7 +249,7 @@ export default function Dashboard() {
         }
 
         const idToken = await user.getIdToken(true);
-        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/movies/search-movies?query=${searchQuery}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/movies/search-movies?query=${searchQuery}`, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken,
@@ -293,7 +293,7 @@ export default function Dashboard() {
 
         if (typeof event === 'string') {
             console.log("type string")
-            const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/group/search-groups-get-last?query=${event}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/group/search-groups-get-last?query=${event}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + idToken,
@@ -308,7 +308,7 @@ export default function Dashboard() {
             // @ts-ignore
             setGroupInfos([data])
         } else {
-            const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/group/search-groups?query=${searchGroupsQuery}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/group/search-groups?query=${searchGroupsQuery}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + idToken,
@@ -341,7 +341,7 @@ export default function Dashboard() {
         }
 
         const idToken = await user.getIdToken(true);
-        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/user/get-signed-url`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/user/get-signed-url`, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken
@@ -366,7 +366,7 @@ export default function Dashboard() {
             console.error("User is not authenticated");
             return;
         }
-        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/group/${groupInfoId}/get-signed-url`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/group/${groupInfoId}/get-signed-url`, {
             method: 'GET'
         });
 
@@ -387,7 +387,7 @@ export default function Dashboard() {
                 return;
             }
             const idToken = await user.getIdToken(true);
-            const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/group/create-group', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/group/create-group`, {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Bearer ' + idToken,

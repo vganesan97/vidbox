@@ -26,7 +26,7 @@ const ImageComponent: React.FC<ImageComponentProps> = ({ user, src, alt, fromMov
         }
 
         const idToken = await user.getIdToken(true);
-        const response = await fetch(`https://vidbox-7d2c1.uc.r.appspot.com/avatar/user/get-signed-url`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/user/get-signed-url`, {
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + idToken

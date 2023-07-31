@@ -34,7 +34,7 @@ const Movie = ({ movie }: MovieProps) => {
         }
         try {
             const idToken = await user.getIdToken(true);
-            const response = await fetch('https://vidbox-7d2c1.uc.r.appspot.com/movies/like-movie', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/movies/like-movie`, {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Bearer ' + idToken,

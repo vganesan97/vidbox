@@ -55,9 +55,7 @@ class AvatarController(private val gcsService: GCSService,
             val user = userRepository.findByFirebaseUid(uid)
             //val signedUrl = refreshProfileAvatarSignedURL(user)
             val signedUrl = gcsService.refreshProfileAvatarSignedURL(user)
-            ResponseEntity.ok(
-                    if (signedUrl != null) GCSSignedURL(signedUrl) else GCSSignedURL("")
-            )
+            ResponseEntity.ok(if (signedUrl != null) GCSSignedURL(signedUrl) else GCSSignedURL(""))
         } catch (e: Exception) {
             ResponseEntity.badRequest().body(GCSSignedURL("error"))
         }
@@ -72,9 +70,7 @@ class AvatarController(private val gcsService: GCSService,
             if (group.isPresent) {
                 //val signedUrl = refreshGroupAvatarSignedURL(group.get())
                 val signedUrl = gcsService.refreshGroupAvatarSignedURL(group.get())
-                ResponseEntity.ok(
-                        if (signedUrl != null) GCSSignedURL(signedUrl) else GCSSignedURL("")
-                )
+                ResponseEntity.ok(if (signedUrl != null) GCSSignedURL(signedUrl) else GCSSignedURL(""))
             } else {
                 ResponseEntity.badRequest().body(GCSSignedURL("group for groupId: $groupInfoId does not exist"))
             }
