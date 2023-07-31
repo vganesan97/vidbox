@@ -20,7 +20,7 @@ jobs:
         uses: 'google-github-actions/auth@v1'
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
-          service_account: 'test-892@vidbox-7d2c1.iam.gserviceaccount.com'
+          service_account: ${{ secrets.GCP_SA }}
 
       - name: Deploy to App Engine
         uses: google-github-actions/deploy-appengine@v1.2.7
