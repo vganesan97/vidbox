@@ -59,12 +59,14 @@ const Movie = ({ movie }: MovieProps) => {
 
     const handleClick = () => {
         console.log(`Movie ${movie.id} clicked!`);
+        console.log(`${imgUrl}${movie.backdrop_path}`)
     }
 
     const movieStyle = {
         cursor: 'pointer', // Changes the cursor to a hand when hovering over the div
         marginBottom: '10px',
-        backgroundColor: isHovered ? '#444444' : ''// Add some margin between the movies
+        backgroundColor: isHovered ? '#444444' : '',// Add some margin between the movies
+        backgroundImage: `url(${imgUrl}${movie.backdrop_path})`
     };
 
     return (
@@ -73,7 +75,7 @@ const Movie = ({ movie }: MovieProps) => {
              onMouseEnter={() => setIsHovered(true)}
              onMouseLeave={() => setIsHovered(false)}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
-                <h2 style={{ marginRight: '10px' }}>{movie.title}{` (${movie.release_date})`}</h2>
+                <h2 style={{ marginRight: '10px' }}>{movie.title}{` (${new Date(movie.release_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })})`}</h2>
                 <button
                     onClick={(event: React.MouseEvent) => handleLike(event)}
                     className="like-button">{isLiked ? '❤️' : '♡'}️</button>

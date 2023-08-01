@@ -1,5 +1,6 @@
 package com.vidbox.backend.entities
 
+import java.util.Date
 import javax.persistence.*
 
 //@Entity
@@ -10,7 +11,7 @@ interface MovieInfoTopRatedProjection {
     val backdrop_path: String?
     val overview: String?
     val title: String?
-    val release_date: Int?
+    val release_date: Date?
     val movie_id: Int?
     val liked: Boolean?
 }

@@ -1,5 +1,6 @@
 package com.vidbox.backend.entities
 
+import java.util.*
 import javax.persistence.*
 
 @Entity
@@ -23,9 +24,29 @@ data class MovieInfoTopRated(
     var title: String? = null,
 
     @Column(name = "release_date")
-    var releaseDate: Int? = null,
+    var releaseDate: Date? = null,
 
     @Column(name = "movie_id")
     var movieId: Int? = null,
 
+    @Column(name = "adult")
+    var adult: String? = null,
+
+    @Column(name = "original_language")
+    var originalLanguage: String? = null,
+
+    @Column(name = "original_title")
+    var originalTitle: String? = null,
+
+    @Column(name = "popularity")
+    var popularity: Float? = null,
+
+    @Column(name = "video")
+    var video: Boolean? = null,
+
+    @Column(name = "vote_average")
+    var voteAverage: Float? = null,
+
+    @Column(name = "vote_count")
+    var voteCount: Int? = null
 )
