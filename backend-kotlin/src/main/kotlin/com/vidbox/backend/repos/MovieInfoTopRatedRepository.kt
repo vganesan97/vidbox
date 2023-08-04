@@ -55,4 +55,17 @@ interface MovieInfoTopRatedRepository : JpaRepository<MovieInfoTopRated, Int> {
     )
     fun findMoviesWithLikedFlag(query: String, userId: Int, pageable: Pageable): Page<MovieInfoTopRated>
 
+    @Query(
+            value = """SELECT m.*, CASE WHEN l.movie_id IS NOT NULL THEN true ELSE false END AS liked
+               FROM movie_infos_top_rated m 
+               LEFT JOIN movie_likes l ON m.id = l.movie_id AND l.user_id = :userId 
+               WHERE m.id IN :ids""",
+            countQuery = """SELECT count(*) 
+                    FROM movie_infos_top_rated m 
+                    LEFT JOIN movie_likes l ON m.id = l.movie_id AND l.user_id = :userId 
+                    WHERE m.id IN :ids""",
+            nativeQuery = true)
+    fun findByIdsAndUser(userId: Int, ids: List<Int>, pageable: Pageable): Page<MovieInfoTopRatedProjection>
+
+
 }

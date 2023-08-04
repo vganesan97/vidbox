@@ -29,10 +29,14 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("com.google.cloud.sql:postgres-socket-factory:1.13.1")
+	implementation("com.google.code.gson:gson:2.8.9")
+	implementation("com.google.cloud:google-cloud-secretmanager:2.22.0")
 	implementation("org.flywaydb:flyway-core:9.1.2")
+	implementation("com.squareup.okhttp3:okhttp:4.9.1")
+	implementation("com.google.cloud:spring-cloud-gcp-starter:4.7.1")
+	implementation("com.google.cloud:spring-cloud-gcp-starter-secretmanager:4.7.1")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
-
 
 
 tasks.withType<KotlinCompile> {
