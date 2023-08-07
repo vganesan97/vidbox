@@ -2,7 +2,6 @@ package com.vidbox.backend.controllers
 
 import com.google.gson.JsonParser
 import com.vidbox.backend.repos.MovieLikesRepository
-import com.vidbox.backend.entities.MovieInfoTopRated
 import com.vidbox.backend.entities.MovieInfoTopRatedProjection
 import com.vidbox.backend.entities.MovieLikes
 import com.vidbox.backend.repos.MovieInfoTopRatedRepository
@@ -12,6 +11,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
@@ -25,7 +25,10 @@ import javax.servlet.http.HttpServletRequest
 class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
                       private val movieLikesRepository: MovieLikesRepository,
                       private val userRepository: UserRepository,
-                      private val firebaseService: FirebaseService) {
+                      private val firebaseService: FirebaseService,
+                      @Value("\${openai-secret-key}") private val openaiSecret: String,
+                      @Value("\${pinecone-api-key}") private val pineconeApiKey: String,
+                      @Value("\${pinecone-db-url}") private val pineconeDbUrl: String) {
 
     @PostMapping("/like-movie")
     fun likeMovie(@RequestBody like: MovieLikes, request: HttpServletRequest): ResponseEntity<Any> {
@@ -60,8 +63,6 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
         val likedMovies = movieLikesRepository.findLikedMoviesByUserId(userId)
-        //println("liked movies: $likedMovies")
-        //likedMovies.forEach { movie -> movie.liked = true }
         return ResponseEntity.ok(likedMovies)
     }
 
@@ -76,23 +77,12 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
         //val resultsPage = movieRepository.findByTitleContains2(query, pageable, userId)
         val pc = pineconeQuery(query)
         val rp1 = movieRepository.findByIdsAndUser(userId, pc, pageable)
-       // val resultsPage = movieRepository.findByTitleContains(query, pageable)
-
-//        val likedMovies = movieLikesRepository.findLikedMoviesByUserId(userId)
-//        resultsPage.content.forEach { movie ->
-//            if (movie in likedMovies) movie.liked = true
-//        }
-        //val resultsPage = movieRepository.findAllWithLiked(userId)
-        //val resultsPage = movieRepository.findMoviesWithLikedFlag(query, userId, pageable)
-        //println(rp1)
         return ResponseEntity.ok(rp1)
     }
 
-    //@GetMapping("/pinecone-query")
     fun pineconeQuery(query: String): List<Int> {
         val client = OkHttpClient()
         // Specify the model and input text
-        println("query: $query")
         val jsonString = """{
             "model": "text-embedding-ada-002",
             "input": "$query"
@@ -102,7 +92,7 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
                 .url("https://api.openai.com/v1/embeddings")
                 .post(requestBody)
                 .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", "Bearer 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") // Replace with your actual API key
+                .addHeader("Authorization", "Bearer $openaiSecret") // Replace with your actual API key
                 .build()
         client.newCall(request0).execute().use { response ->
             if (!response.isSuccessful) throw IOException("Unexpected code $response")
@@ -114,11 +104,11 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
                     "vector": $data
             }"""
             val request3 = Request.Builder()
-                    .url("https://vidbox-movie-search-6b646aa.svc.us-west1-gcp-free.pinecone.io/query")
+                    .url("$pineconeDbUrl/query")
                     .post(requestBodyJson.toRequestBody("application/json".toMediaTypeOrNull()))
                     .addHeader("accept", "application/json")
                     .addHeader("content-type", "application/json")
-                    .addHeader("Api-Key", "eb741bc8-c5a9-49a5-9037-5d65a9fbd465")
+                    .addHeader("Api-Key", pineconeApiKey)
                     .build()
             client.newCall(request3).execute().use { response1 ->
                 if (!response1.isSuccessful) throw IOException("Unexpected code $response1")

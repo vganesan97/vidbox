@@ -29,10 +29,13 @@ class UserController(private val userRepository: UserRepository,
         try {
             val uid = firebaseService.getUidFromFirebaseToken(request = request)
             val user = userRepository.findByFirebaseUid(uid)
+            println(user.firstName)
             return ResponseEntity.ok(LoginResponse(
                     message = "Successfully logged in. " +
                             "User exists and their name is ${user.firstName} ${user.lastName}",
-                    username = user.username!!,
+                    username = user.username.toString(),
+                    firstName = user.firstName.toString(),
+                    lastName = user.lastName.toString(),
                     uid = user.firebaseUid!!,
                     profilePic = if (user.profilePic != null) user.profilePic!! else ""
             ))
@@ -40,6 +43,8 @@ class UserController(private val userRepository: UserRepository,
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(LoginResponse(
                     message = "An error occurred: ${e.message}",
                     username = "unknown",
+                    firstName = "unknown",
+                    lastName = "unknown",
                     uid = "null",
                     profilePic = "null"
             ))
@@ -67,6 +72,8 @@ class UserController(private val userRepository: UserRepository,
         return ResponseEntity.ok(LoginResponse(
                 message = "Successfully created user",
                 username = userCreds.username,
+                firstName = "unknown",
+                lastName = "unknown",
                 uid = user.firebaseUid!!,
                 profilePic = if (user.profilePic != null) user.profilePic!! else ""
         ))

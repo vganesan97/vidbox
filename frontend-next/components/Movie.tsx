@@ -74,22 +74,31 @@ const Movie = ({ movie }: MovieProps) => {
              style={movieStyle}
              onMouseEnter={() => setIsHovered(true)}
              onMouseLeave={() => setIsHovered(false)}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-                <h2 style={{ marginRight: '10px' }}>{movie.title}{` (${new Date(movie.release_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })})`}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0))', color: '#fff', padding: '10px' }}>
+                <h2 style={{ marginRight: '10px' }}>
+                    {movie.title}{` (${new Date(movie.release_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })})`}
+                </h2>
                 <button
                     onClick={(event: React.MouseEvent) => handleLike(event)}
-                    className="like-button">{isLiked ? '❤️' : '♡'}️</button>
+                    className="like-button"
+                    style={{ background: 'transparent', border: 'none', color: 'white' }}>{isLiked ? '❤️' : '♡'}️
+                </button>
             </div>
+
             <ImageComponent
                 user={{}}
                 src={`${imgUrl}${movie.poster_path}`}
                 alt={movie.title}
-                fromMovie={true}/>
+                fromMovie={true}
+            />
 
             {/*<img src={`${imgUrl}${movie.poster_path}`}*/}
             {/*     alt={movie.title}*/}
             {/*     style={{width: "200px", height: "300px"}}/>*/}
-            <p><b>{movie.overview}</b></p>
+            <div style={{ background: 'linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.2))', color: '#fff', padding: '10px' }}>
+                <b>{movie.overview}</b>
+            </div>
+
         </div>
     );
 }

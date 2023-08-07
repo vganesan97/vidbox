@@ -1,10 +1,7 @@
 package com.vidbox.backend.controllers
 
 import com.google.cloud.secretmanager.v1.*
-import com.google.cloud.spring.secretmanager.SecretManagerTemplate
 import com.google.cloud.storage.*
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.web.bind.annotation.*
 import java.io.IOException
 import java.util.*
@@ -15,12 +12,6 @@ import java.util.zip.Checksum
 @RestController
 class HomeController() {
 
-    @Autowired
-    private val secretManagerTemplate: SecretManagerTemplate? = null
-
-    @Value("\${sm://openai_secret}")
-    private val appSecret: String? = null
-
     @GetMapping("/")
     fun home(): Any {
         return """
@@ -28,13 +19,11 @@ class HomeController() {
     """.trimIndent()
     }
 
-    @Value("\${my-app-secret-2}")
-    private val myAppSecret: String? = null
 
     @GetMapping("/secret1")
     fun test(): String {
-        val x = secretManagerTemplate?.getSecretString("openai_secret")
-        return "$myAppSecret $appSecret $x"
+
+        return ""
     }
 
 

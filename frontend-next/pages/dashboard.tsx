@@ -453,7 +453,7 @@ if (!loading && user) {
                     <h1>
                         {user.email}
                     </h1>
-                    <div>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
                         {signedURL.length > 0 ? (
                             <>
                                 <ImageComponent user={user} src={signedURL} alt={"Group Avatar"}/>
@@ -461,6 +461,14 @@ if (!loading && user) {
                         ) : (
                             <></>
                         )}
+                        <div style={{ marginLeft: '10px' }}>
+                            <h1>
+                                {router.query.firstName}
+                            </h1>
+                            <h1>
+                                {router.query.lastName}
+                            </h1>
+                        </div>
                     </div>
                     <form onSubmit={handleSearchSubmit}>
                         <input
@@ -532,17 +540,17 @@ if (!loading && user) {
                         <>
                             {likedMovies.length > 0 ? (
                                 <>
-                                    <h1><u>Liked Movies</u></h1>
+                                    <h1>Liked Movies</h1>
                                     <SearchResultsList movies={likedMovies}/>
                                 </>
                             ) : movieInfos.length > 0 ? (
                                 <>
-                                    <h1><u>{movieInfos.length > 0 ? 'Search Results' : ''}</u></h1>
+                                    <h1>{movieInfos.length > 0 ? 'Search Results' : ''}</h1>
                                     <SearchResultsList movies={movieInfos}/>
                                 </>
                             ) : groupInfos.length >0 ? (
                                 <>
-                                    <h1><u>Liked Movies</u></h1>
+                                    <h1>Groups</h1>
                                     <GroupList groups={groupInfos}/>
                                 </>
                             ) : null}

@@ -9,19 +9,16 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
-import java.io.FileInputStream
+import java.io.ByteArrayInputStream
 import javax.servlet.http.HttpServletRequest
 
 @Service
-class FirebaseService(@Value("\${firebase.filepath}") private val firebaseFilePath: String) {
+class FirebaseService(@Value("\${firebase-key}") private val firebaseKey: String) {
 
-    val filePath = firebaseFilePath
-    val serviceAccount = FileInputStream(filePath)
     val options = FirebaseOptions.builder()
-        .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-        .setDatabaseUrl("https://vidbox-7d2c1.firebaseio.com")
-        .build()
-
+            .setCredentials(GoogleCredentials.fromStream(ByteArrayInputStream(firebaseKey.toByteArray())))
+            .setDatabaseUrl("https://vidbox-7d2c1.firebaseio.com")
+            .build()
     val firebaseApp = FirebaseApp.initializeApp(options)
 
     fun getUidFromFirebaseToken(idToken: String? = null, request: HttpServletRequest? = null): String {
@@ -42,5 +39,4 @@ class FirebaseService(@Value("\${firebase.filepath}") private val firebaseFilePa
         }
         return uid
     }
-
 }

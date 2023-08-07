@@ -9,6 +9,8 @@ import ErrorModal from "@/components/ErrorModal";
 interface SignInFormValues {
     username: string;
     password: string;
+    firstName?: string;
+    lastName?: string;
 }
 
 export default function Home() {
@@ -70,12 +72,14 @@ export default function Home() {
             });
 
             const res1 = await response1.json()
-            console.log("signed url: ", res1)
+            console.log("firstName: ", values.firstName)
 
             router.push({
                 pathname: '/dashboard',
                 query: {
-                    username: values.username,
+                    username: res.username,
+                    firstName: res.firstName,
+                    lastName: res.lastName,
                     uid: res.uid,
                     signedURL: res1.signedUrl
                 }
@@ -102,7 +106,6 @@ export default function Home() {
         setRoutingToSignUp(true);  // Add this line
         router.push('/create-account');
     }
-
 
   return (
       <main className={styles.main}>
