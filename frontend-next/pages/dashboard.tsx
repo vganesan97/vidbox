@@ -448,12 +448,15 @@ if (!loading && user) {
     // @ts-ignore
     // @ts-ignore
     return (
-            <div style={{ display: 'flex'}}>
-                <div style={{ marginRight: '20px' }}>
-                    <h1>
-                        {user.email}
-                    </h1>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{display: 'flex'}}>
+                <div style={{
+                    borderRight: '3px solid white', /* Add a left border with 2px width and dotted style */
+                    paddingRight: '6px', /* Add 10px of left margin to move the line to the left */
+                    marginRight: '10px',
+                    paddingLeft: '5px'
+                }}>
+                    <h1 style={{ paddingLeft: '5px' }}>{user.email}</h1>
+                    <div style={{ paddingLeft:'5px', display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
                         {signedURL.length > 0 ? (
                             <>
                                 <ImageComponent user={user} src={signedURL} alt={"Group Avatar"}/>
@@ -462,15 +465,11 @@ if (!loading && user) {
                             <></>
                         )}
                         <div style={{ marginLeft: '10px' }}>
-                            <h1>
-                                {router.query.firstName}
-                            </h1>
-                            <h1>
-                                {router.query.lastName}
-                            </h1>
+                            <h1>{router.query.firstName}</h1>
+                            <h1>{router.query.lastName}</h1>
                         </div>
                     </div>
-                    <form onSubmit={handleSearchSubmit}>
+                    <form onSubmit={handleSearchSubmit} >
                         <input
                             type="text"
                             value={searchQuery}
@@ -486,9 +485,7 @@ if (!loading && user) {
                             <button onClick={handleCreateGroupClick}>
                                 Create Group
                             </button>
-                        </div>
-                        <div>
-                            <h2>
+                            <h2 style={{ paddingLeft: '5px' }}>
                                 <label
                                     htmlFor="fileInput"
                                     className="custom-file-upload"
@@ -523,15 +520,16 @@ if (!loading && user) {
                             onChange={handleSearchGroupsChange}
                             placeholder="Search for groups..."
                         />
-                        <div>
-                            <button type="submit">
-                                Search for Groups
-                            </button>
-                        </div>
+
+                        <button type="submit">
+                            Search for Groups
+                        </button>
+
                         <SignOut/>
                     </form>
 
                 </div>
+
 
                 <div>
                     {showCreateGroupForm ? (

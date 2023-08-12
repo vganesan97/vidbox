@@ -2,6 +2,8 @@ import {auth} from "@/firebase_creds";
 import { useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import ImageComponent from "@/components/ImageComponent";
+import styles from 'styles/Movie.module.css';
+
 
 type Movie = {
     id: number;
@@ -25,6 +27,13 @@ const Movie = ({ movie }: MovieProps) => {
     const [isHovered, setIsHovered] = useState(false);
     const [isLiked, setIsLiked] = useState(movie.liked);
     const [user, loading, error] = useAuthState(auth)
+    const [isFlipped, setIsFlipped] = useState(false);
+    const [showForm, setShowForm] = useState(false);
+
+
+    const handleFormClick = (event: React.MouseEvent) => {
+        event.stopPropagation(); // Prevent the click event from bubbling up
+    };
 
     const handleLike = async (event: React.MouseEvent) => {
         event.stopPropagation();
@@ -60,6 +69,8 @@ const Movie = ({ movie }: MovieProps) => {
     const handleClick = () => {
         console.log(`Movie ${movie.id} clicked!`);
         console.log(`${imgUrl}${movie.backdrop_path}`)
+        setIsFlipped(!isFlipped);
+        setShowForm(!showForm);
     }
 
     const movieStyle = {
@@ -69,36 +80,215 @@ const Movie = ({ movie }: MovieProps) => {
         backgroundImage: `url(${imgUrl}${movie.backdrop_path})`
     };
 
+    // return (
+    //     <div onClick={handleClick}
+    //          style={movieStyle}
+    //          onMouseEnter={() => setIsHovered(true)}
+    //          onMouseLeave={() => setIsHovered(false)}>
+    //         <div style={{ display: 'flex', alignItems: 'center', background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0))', color: '#fff', padding: '10px' }}>
+    //             <h2 style={{ marginRight: '10px' }}>
+    //                 {movie.title}{` (${new Date(movie.release_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })})`}
+    //             </h2>
+    //             <button
+    //                 onClick={(event: React.MouseEvent) => handleLike(event)}
+    //                 className="like-button"
+    //                 style={{ background: 'transparent', border: 'none', color: 'white' }}>{isLiked ? '❤️' : '♡'}️
+    //             </button>
+    //         </div>
+    //
+    //         <ImageComponent
+    //             user={{}}
+    //             src={`${imgUrl}${movie.poster_path}`}
+    //             alt={movie.title}
+    //             fromMovie={true}
+    //         />
+    //
+    //         {/*<img src={`${imgUrl}${movie.poster_path}`}*/}
+    //         {/*     alt={movie.title}*/}
+    //         {/*     style={{width: "200px", height: "300px"}}/>*/}
+    //         <div style={{ background: 'linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.2))', color: '#fff', padding: '10px' }}>
+    //             <b>{movie.overview}</b>
+    //         </div>
+    //
+    //     </div>
+    // );
+
+    // return (
+    //     <div className={`${styles.flipContainer} ${isFlipped ? styles.flipped : ""}`} onClick={handleClick} style={movieStyle}>
+    //         <div className={styles.flipper}>
+    //             <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+    //                 <div style={{ display: 'flex', alignItems: 'center', background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0))', color: '#fff', padding: '10px' }}>
+    //                     <h2 style={{ marginRight: '10px' }}>
+    //                         {movie.title}{` (${new Date(movie.release_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })})`}
+    //                     </h2>
+    //                     <button
+    //                         onClick={(event: React.MouseEvent) => handleLike(event)}
+    //                         className="like-button"
+    //                         style={{ background: 'transparent', border: 'none', color: 'white' }}>{isLiked ? '❤️' : '♡'}️
+    //                     </button>
+    //                 </div>
+    //                 <ImageComponent
+    //                     user={{}}
+    //                     src={`${imgUrl}${movie.poster_path}`}
+    //                     alt={movie.title}
+    //                     fromMovie={true}
+    //                 />
+    //                 <div style={{ background: 'linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.2))', color: '#fff', padding: '10px' }}>
+    //                     <b>{movie.overview}</b>
+    //                 </div>
+    //             </div>
+    //             <div className={styles.back}>
+    //                 <form>
+    //                     <input type="text" placeholder="Your Name" />
+    //                     <input type="email" placeholder="Your Email" />
+    //                     <textarea placeholder="Your Message"></textarea>
+    //                     <button type="submit">Send</button>
+    //                 </form>
+    //             </div>
+    //         </div>
+    //     </div>
+    // );
+
+    // const formStyle: React.CSSProperties = {
+    //     display: showForm ? 'block' : 'none', // Show or hide the form
+    //     background: 'rgba(0, 0, 0, 0.7)',
+    //     padding: '10px',
+    //     color: '#fff',
+    //     // Add other styles for the form
+    // };
+
+    const formStyle: React.CSSProperties = {
+        position: 'absolute', // Absolutely position the form
+        right: '2%',
+        top: '20%', // Align it to the top of the container
+        left: '20%', // Align it to the right of the container
+        background: 'rgba(0, 0, 0, 0.7)', // Semi-transparent black background over the image
+        display: showForm ? 'block' : 'none', // Show or hide the form
+        padding: '10px',
+        color: '#fff',
+        // Add other styles for the form
+    };
+
+    const inputStyle = {
+        width: '100%',
+        padding: '10px',
+        margin: '5px 0',
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        color: '#fff',
+        border: '1px solid #fff'
+    };
+
+    const buttonStyle = {
+        padding: '10px',
+        backgroundColor: '#444',
+        color: '#fff',
+        border: 'none',
+        cursor: 'pointer',
+        margin: '5px'
+    };
+
+    // if (showForm) {
+    //     return (
+    //         <div style={movieStyle}>
+    //             <form style={formStyle}>
+    //                 <input type="text" placeholder="Your Name" style={inputStyle}/>
+    //                 <input type="email" placeholder="Your Email" style={inputStyle}/>
+    //                 <textarea placeholder="Your Message" style={inputStyle}></textarea>
+    //                 <button type="submit" style={buttonStyle}>Send</button>
+    //                 <button type="button" onClick={handleClick} style={buttonStyle}>Go back</button>
+    //             </form>
+    //         </div>
+    //     );
+    // }
+
+    const formContainerStyle = {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.7)', // Semi-transparent background
+        display: showForm ? 'flex' : 'none', // Show or hide the form
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center'
+    };
+
+    // return (
+    //     <div onClick={handleClick} style={movieStyle}>
+    //         <div style={{ display: 'flex', alignItems: 'center', background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0))', color: '#fff', padding: '10px' }}>
+    //             <h2 style={{ marginRight: '10px' }}>
+    //                 {movie.title}{` (${new Date(movie.release_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })})`}
+    //             </h2>
+    //             <button
+    //                 onClick={(event: React.MouseEvent) => handleLike(event)}
+    //                 className="like-button"
+    //                 style={{ background: 'transparent', border: 'none', color: 'white' }}>{isLiked ? '❤️' : '♡'}️
+    //             </button>
+    //         </div>
+    //         <ImageComponent
+    //             user={{}}
+    //             src={`${imgUrl}${movie.poster_path}`}
+    //             alt={movie.title}
+    //             fromMovie={true}
+    //         />
+    //         <div style={{ background: 'linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.2))', color: '#fff', padding: '10px' }}>
+    //             <b>{movie.overview}</b>
+    //         </div>
+    //     </div>
+    // );
+
+    // const containerStyle = {
+    //     display: 'flex', // Use flexbox to align movie poster and form side by side
+    //     flexDirection: showForm ? 'row' : 'column', // Change direction based on showForm
+    //     cursor: 'pointer',
+    //     marginBottom: '10px',
+    //     backgroundColor: isHovered ? '#444444' : '',
+    // };
+
+    const containerStyle: React.CSSProperties = {
+        position: 'relative', // Set to relative so the absolute positioning of the form is relative to this container
+
+        //display: 'flex', // Use flexbox to align movie poster and form side by side
+        cursor: 'pointer',
+        marginBottom: '10px',
+        backgroundImage: `url(${imgUrl}${movie.backdrop_path})`, // Set the background image for the whole container
+        //backgroundSize: showForm ? 'cover' : 'auto', // Cover the entire container if the form is showing
+    };
+
     return (
-        <div onClick={handleClick}
-             style={movieStyle}
-             onMouseEnter={() => setIsHovered(true)}
-             onMouseLeave={() => setIsHovered(false)}>
-            <div style={{ display: 'flex', alignItems: 'center', background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0))', color: '#fff', padding: '10px' }}>
-                <h2 style={{ marginRight: '10px' }}>
-                    {movie.title}{` (${new Date(movie.release_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })})`}
-                </h2>
-                <button
-                    onClick={(event: React.MouseEvent) => handleLike(event)}
-                    className="like-button"
-                    style={{ background: 'transparent', border: 'none', color: 'white' }}>{isLiked ? '❤️' : '♡'}️
-                </button>
+        <div style={containerStyle} onClick={handleClick}>
+            <div style={movieStyle}>
+                <div style={{ display: 'flex', alignItems: 'center', background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0))', color: '#fff', padding: '10px' }}>
+                    <h2 style={{ marginRight: '10px' }}>
+                        {movie.title}{` (${new Date(movie.release_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })})`}
+                    </h2>
+                    <button
+                        onClick={(event: React.MouseEvent) => handleLike(event)}
+                        className="like-button"
+                        style={{ background: 'transparent', border: 'none', color: 'white' }}>{isLiked ? '❤️' : '♡'}️
+                    </button>
+                </div>
+                <ImageComponent
+                    user={{}}
+                    src={`${imgUrl}${movie.poster_path}`}
+                    alt={movie.title}
+                    fromMovie={true}
+                />
+                <div style={{ background: 'linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.2))', color: '#fff', padding: '10px' }}>
+                    <b>{movie.overview}</b>
+                </div>
+                {/* ... existing movie rendering code, including poster, title, like button, and overview ... */}
             </div>
-
-            <ImageComponent
-                user={{}}
-                src={`${imgUrl}${movie.poster_path}`}
-                alt={movie.title}
-                fromMovie={true}
-            />
-
-            {/*<img src={`${imgUrl}${movie.poster_path}`}*/}
-            {/*     alt={movie.title}*/}
-            {/*     style={{width: "200px", height: "300px"}}/>*/}
-            <div style={{ background: 'linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.2))', color: '#fff', padding: '10px' }}>
-                <b>{movie.overview}</b>
+            <div style={formStyle} onClick={handleFormClick}>
+                <form>
+                    <input type="text" placeholder="Your Name" style={inputStyle} />
+                    <input type="email" placeholder="Your Email" style={inputStyle} />
+                    <textarea placeholder="Your Message" style={inputStyle}></textarea>
+                    <button type="submit" style={buttonStyle}>Send</button>
+                    <button type="button" onClick={handleClick} style={buttonStyle}>Close</button>
+                </form>
             </div>
-
         </div>
     );
 }
