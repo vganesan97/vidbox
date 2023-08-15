@@ -20,43 +20,8 @@ interface GroupProps {
 const Group = ({ group }: GroupProps) =>  {
     const [groupSignedURL, setGroupSignedURL] = useState<string>('');
     const [user, loading, error] = useAuthState(auth)
-    let attempts = 0
-    const handleRefreshGroupAvatarSignedURL = async (groupInfoId: Number) => {
-        console.log("refresh")
-        if (attempts >= 3) {  // only try to refresh the URL up to 3 times
-            console.error('Failed to load image after 3 attempts');
-            attempts = 0
-            return;
-        }
-
-        if (!user) {
-            console.error("User is not authenticated");
-            return;
-        }
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/group/${groupInfoId}/get-signed-url`, {
-            method: 'GET'
-        });
-
-        const res = await response.json()
-        console.log("su", res.signedUrl)
-        setGroupSignedURL(res.signedUrl)
-    }
 
     const joinGroup = async () => {
-        // if (!user) {
-        //     console.error("User is not authenticated");
-        //     return;
-        // }
-        // const idToken = await user.getIdToken(true);
-        // const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/group/join-group/${group.id}`, {
-        //     method: 'POST',
-        //     headers: {
-        //         'Authorization': 'Bearer ' + idToken,
-        //         'Content-Type': 'application/json'
-        //     }
-        // });
-        // const res = await response.json()
-        // console.log("joined group ", res)
         await joinGroupRequest(user, group.id)
     }
 
