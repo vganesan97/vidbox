@@ -5,6 +5,7 @@ import {useCreateUserWithEmailAndPassword} from 'react-firebase-hooks/auth';
 import {ErrorMessage, Field, Form, Formik} from 'formik';
 import {auth} from "@/firebase_creds";
 import ErrorModal from '../components/ErrorModal';
+import {signUpUserRequest} from "@/requests/backendRequests";
 
 
 export default function CreateAccount() {
@@ -57,12 +58,7 @@ export default function CreateAccount() {
 
             // Handle if user creation is successful
             if (userCredential) {
-                values.idToken = await userCredential.user.getIdToken(true);
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/create-user`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(values),
-                });
+                const res = await signUpUserRequest(user, values)
 
                 setErrorMsg({
                     code: '',
@@ -71,7 +67,7 @@ export default function CreateAccount() {
 
                 router.push({
                     pathname: '/dashboard',
-                    query: { username: values.username },
+                    query: { username: res.username },
                 });
             }
 

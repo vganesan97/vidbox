@@ -2,7 +2,9 @@ import {auth} from "@/firebase_creds";
 import { useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import ImageComponent from "@/components/ImageComponent";
-import styles from 'styles/Movie.module.css';
+import ErrorModal from "@/components/ErrorModal";
+import {ErrorMessage, Field, Form, Formik} from 'formik';
+import {createReviewRequest, likeMovieRequest} from "@/requests/backendRequests";
 
 
 type Movie = {
@@ -20,6 +22,10 @@ type MovieProps = {
     movie: Movie;
 };
 
+interface FormValues {
+    reviewContent: string
+}
+
 const Movie = ({ movie }: MovieProps) => {
 
     var imgUrl = 'https://image.tmdb.org/t/p/original/'
@@ -29,6 +35,9 @@ const Movie = ({ movie }: MovieProps) => {
     const [user, loading, error] = useAuthState(auth)
     const [isFlipped, setIsFlipped] = useState(false);
     const [showForm, setShowForm] = useState(false);
+    const [errorMsg, setErrorMsg] = useState({code: '', msg: ''})
+    const [errorModalOpen, setErrorModalOpen] = useState(false);
+
 
 
     const handleFormClick = (event: React.MouseEvent) => {
@@ -42,24 +51,24 @@ const Movie = ({ movie }: MovieProps) => {
             return;
         }
         try {
-            const idToken = await user.getIdToken(true);
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/movies/like-movie`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + idToken,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({movieId: movie.id})
-            });
-
-            const res = await response.json()
-            console.log("login response", res)
-
-            if (response.ok) {
+            // const idToken = await user.getIdToken(true);
+            // const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/movies/like-movie`, {
+            //     method: 'POST',
+            //     headers: {
+            //         'Authorization': 'Bearer ' + idToken,
+            //         'Content-Type': 'application/json'
+            //     },
+            //     body: JSON.stringify({movieId: movie.id})
+            // });
+            //
+            // const res = await response.json()
+            // console.log("login response", res)
+            const res = await likeMovieRequest(user, movie.id)
+            if (res) {
                 res.liked ? setIsLiked(true) : setIsLiked(false);
                 console.log(`Movie ${movie.id} ${res.liked ? 'liked' : 'unliked'} by user ${user.uid}`);
             } else {
-                console.error("Error liking/unliking movie:", response.status, response.statusText);
+                console.error("Error liking/unliking movie:", res.status, res.statusText);
             }
         } catch (e) {
             console.log("Error ")
@@ -248,7 +257,6 @@ const Movie = ({ movie }: MovieProps) => {
 
     const containerStyle: React.CSSProperties = {
         position: 'relative', // Set to relative so the absolute positioning of the form is relative to this container
-
         //display: 'flex', // Use flexbox to align movie poster and form side by side
         cursor: 'pointer',
         marginBottom: '10px',
@@ -256,38 +264,119 @@ const Movie = ({ movie }: MovieProps) => {
         //backgroundSize: showForm ? 'cover' : 'auto', // Cover the entire container if the form is showing
     };
 
+    const createReview = async (values: any) => {
+        console.log(values)
+        try {
+            await createReviewRequest(user, values)
+        } catch (error: any) {
+            setErrorModalOpen(true);
+            setErrorMsg({
+                code: '',
+                msg: error.message,
+            });
+        }
+        // try {
+        //     if (user) {
+        //         let idToken = await user.getIdToken(true);
+        //         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/review/create`, {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Authorization': 'Bearer ' + idToken,
+        //                 'Content-Type': 'application/json' },
+        //             body: JSON.stringify(values),
+        //         });
+        //
+        //         setErrorMsg({
+        //             code: '',
+        //             msg: ''
+        //         });
+        //     }
+        //
+        // } catch (error) {
+        //     // This error will be handled below
+        //     console.error("An error occurred:", error);
+        // }
+
+        // if (error) {
+        //     setErrorModalOpen(true);
+        //     setErrorMsg({
+        //         code: '',
+        //         msg: error.message,
+        //     });
+        // }
+    };
+
     return (
         <div style={containerStyle} onClick={handleClick}>
             <div style={movieStyle}>
                 <div style={{ display: 'flex', alignItems: 'center', background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0))', color: '#fff', padding: '10px' }}>
-                    <h2 style={{ marginRight: '10px' }}>
+                    <h2 style={{marginTop: '-15px'}}>
                         {movie.title}{` (${new Date(movie.release_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })})`}
                     </h2>
                     <button
                         onClick={(event: React.MouseEvent) => handleLike(event)}
                         className="like-button"
-                        style={{ background: 'transparent', border: 'none', color: 'white' }}>{isLiked ? '❤️' : '♡'}️
+                        style={{ background: 'transparent', border: 'none', color: 'white', marginTop: '-8px' }}>{isLiked ? '❤️' : '♡'}️
                     </button>
                 </div>
-                <ImageComponent
-                    user={{}}
-                    src={`${imgUrl}${movie.poster_path}`}
-                    alt={movie.title}
-                    fromMovie={true}
-                />
-                <div style={{ background: 'linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.2))', color: '#fff', padding: '10px' }}>
+                <div style={{paddingLeft: '10px', marginTop: '-13px'}}>
+                    <ImageComponent
+                        user={{}}
+                        src={`${imgUrl}${movie.poster_path}`}
+                        alt={movie.title}
+                        fromMovie={true}
+                    />
+                </div>
+                <div style={{ paddingLeft: '10px', background: 'linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.2))', color: '#fff', padding: '10px' }}>
                     <b>{movie.overview}</b>
                 </div>
                 {/* ... existing movie rendering code, including poster, title, like button, and overview ... */}
             </div>
             <div style={formStyle} onClick={handleFormClick}>
-                <form>
-                    <input type="text" placeholder="Your Name" style={inputStyle} />
-                    <input type="email" placeholder="Your Email" style={inputStyle} />
-                    <textarea placeholder="Your Message" style={inputStyle}></textarea>
-                    <button type="submit" style={buttonStyle}>Send</button>
-                    <button type="button" onClick={handleClick} style={buttonStyle}>Close</button>
-                </form>
+                <Formik
+                    initialValues={{ reviewContent: '', movieId: movie.id }}
+                    validateOnChange={false} // Only validate the form when the submit button is clicked
+                    validateOnBlur={false}
+                    validate={values => {
+                        const errors: Partial<FormValues> = {};
+                        if (!values.reviewContent) {
+                            errors.reviewContent = 'Required';
+                        }
+                        return errors;
+                    }}
+                    onSubmit={
+                        async (values, { setSubmitting }) => {
+                            await createReview(values)
+                            setSubmitting(false)
+                        }}
+                >
+                    {({ isSubmitting}) => (
+                        <Form>
+                            <div>
+                                <label style={{ fontSize: '25px', height: '30px', fontWeight: 'bold' }} htmlFor="reviewContent">Review</label>
+                                <Field as="textarea" id="reviewContent" name="reviewContent" rows="10" cols="100" />
+                                <ErrorMessage name="reviewContent" component="div" />
+                            </div>
+
+                            <div>
+                                <button type="submit" disabled={isSubmitting}>
+                                    {loading ? "Loading..." : "Submit"}
+                                </button>
+                            </div>
+
+                            <div style={{width: '100%'}}>
+                                {errorModalOpen && <ErrorModal error={errorMsg}/>}
+                            </div>
+                        </Form>
+                    )}
+                </Formik>
+                {/*<form>*/}
+                {/*    <input type="text" placeholder="Your Name" style={inputStyle} />*/}
+                {/*    <input type="email" placeholder="Your Email" style={inputStyle} />*/}
+                {/*    <textarea placeholder="Your Message" style={inputStyle}></textarea>*/}
+                {/*    <button type="submit" style={buttonStyle}>Send</button>*/}
+                {/*    <button type="button" onClick={handleClick} style={buttonStyle}>Close</button>*/}
+                {/*</form>*/}
             </div>
         </div>
     );

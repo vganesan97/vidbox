@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ImageLoader from './ImageLoader';
+import {refreshProfileAvatarSignedURLRequest} from "@/requests/backendRequests";
 
 interface ImageComponentProps {
     src: string;
@@ -20,22 +21,22 @@ const ImageComponent: React.FC<ImageComponentProps> = ({ user, src, alt, fromMov
             return;
         }
 
-        if (!user) {
-            console.error("User is not authenticated");
-            return;
-        }
-
-        const idToken = await user.getIdToken(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/user/get-signed-url`, {
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + idToken
-            }
-        });
-
-        const res = await response.json()
-        console.log("su", res.signedUrl)
-        setSignedURL(res.signedUrl)
+        // if (!user) {
+        //     console.error("User is not authenticated");
+        //     return;
+        // }
+        //
+        // const idToken = await user.getIdToken(true);
+        // const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/user/get-signed-url`, {
+        //     method: 'GET',
+        //     headers: {
+        //         'Authorization': 'Bearer ' + idToken
+        //     }
+        // });
+        //
+        // const res = await response.json()
+        // console.log("su", res.signedUrl)
+        setSignedURL(await refreshProfileAvatarSignedURLRequest(user))
     }
 
     return (

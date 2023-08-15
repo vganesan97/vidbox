@@ -2,6 +2,7 @@ import { useState} from 'react';
 import {auth} from "@/firebase_creds";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import ImageComponent from "@/components/ImageComponent";
+import {joinGroupRequest} from "@/requests/backendRequests";
 
 type Group = {
     id: number;
@@ -42,20 +43,21 @@ const Group = ({ group }: GroupProps) =>  {
     }
 
     const joinGroup = async () => {
-        if (!user) {
-            console.error("User is not authenticated");
-            return;
-        }
-        const idToken = await user.getIdToken(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/group/join-group/${group.id}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + idToken,
-                'Content-Type': 'application/json'
-            }
-        });
-        const res = await response.json()
-        console.log("joined group ", res)
+        // if (!user) {
+        //     console.error("User is not authenticated");
+        //     return;
+        // }
+        // const idToken = await user.getIdToken(true);
+        // const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/group/join-group/${group.id}`, {
+        //     method: 'POST',
+        //     headers: {
+        //         'Authorization': 'Bearer ' + idToken,
+        //         'Content-Type': 'application/json'
+        //     }
+        // });
+        // const res = await response.json()
+        // console.log("joined group ", res)
+        await joinGroupRequest(user, group.id)
     }
 
     return (

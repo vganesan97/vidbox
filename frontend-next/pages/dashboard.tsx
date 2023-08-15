@@ -9,6 +9,18 @@ import SearchResultsList from "@/components/SearchResultsList";
 import GroupList from "@/components/GroupList";
 import SignOut from "@/components/SignOut";
 import ImageComponent from "@/components/ImageComponent";
+import {
+    createGroupRequest,
+    getGroupAvatarPutSignedUrlRequest,
+    getGroupsRequest,
+    getLikedMoviesRequest,
+    getProfileAvatarPutSignedUrlRequest, putGroupAvatarRequest,
+    putProfileAvatarRequest,
+    refreshProfileAvatarSignedURLRequest,
+    searchGroupsGetLastRequest,
+    searchGroupsRequest,
+    searchMoviesRequest
+} from "@/requests/backendRequests";
 
 export default function Dashboard() {
     const router = useRouter();
@@ -76,105 +88,29 @@ export default function Dashboard() {
     }
 
     const getProfileAvatarPutSignedUrl = async (): Promise<string> => {
-        if (user == null) {
-            console.error("user not logged in or authorized");
-            throw new Error("user not logged in or authorized");
+        const response = await getProfileAvatarPutSignedUrlRequest(user)
+        if (!response) {
+            throw new Error(`GET request failed: ${response}`);
         }
-
-        const idToken = await user.getIdToken(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/user/put-signed-url`, {
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + idToken
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`GET request failed: ${response.status}`);
-        }
-
-        const responseStr = await response.json();
-        console.log("signed url response", responseStr.signedUrl);
-
-        return responseStr.signedUrl
+        console.log("signed url response", response.signedUrl);
+        return response.signedUrl
     }
 
-    const getGroupAvatarGetSignedUrl = async (groupInfoId: Number): Promise<string> => {
-        if (user == null) {
-            console.error("user not logged in or authorized");
-            throw new Error("user not logged in or authorized");
-        }
-
-        //const idToken = await user.getIdToken(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/group/${groupInfoId}/get-signed-url`, {
-            method: 'GET'
-        });
-        const res = await response.json()
-
-
-        if (!response.ok) {
-            throw new Error(`GET request failed: ${response.status}`);
-        }
-
-        const responseStr = await response.json();
-        console.log("signed url response", responseStr.signedUrl);
-
-        return responseStr.signedUrl
-    }
-
-    const getGroupAvatarPutSignedUrl = async (groupId: Number): Promise<string> => {
-        if (!user) {
-            console.error("user not logged in or authorized");
-            throw new Error("user not logged in or authorized");
-        }
-
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/group/${groupId}/put-signed-url`, {
-            method: 'GET',
-        });
-
-        if (!response.ok) {
-            throw new Error(`GET request failed: ${response.status}`);
-        }
-
-        const responseStr = await response.json();
-        console.log("signed url response", responseStr.signedUrl);
-
-        return responseStr.signedUrl
+    const getGroupAvatarPutSignedUrl = async (groupId: number): Promise<string> => {
+        const response = await getGroupAvatarPutSignedUrlRequest(user, groupId)
+        if (!response) throw new Error(`GET request failed: ${response}`)
+        console.log("signed url response", response.signedUrl);
+        return response.signedUrl
     }
 
     async function handleUpdateProfileAvatar(event: React.ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0];
-
         // Check the file type before upload
-        if (file != null && !file.type.startsWith('image/jpeg')) {
-            throw new Error('File is not an jpeg image');
-        }
-
+        if (file != null && !file.type.startsWith('image/jpeg')) throw new Error('File is not an jpeg image');
         const signedUrl = await getProfileAvatarPutSignedUrl()
-        const response = await fetch(signedUrl, {
-            method: 'PUT',
-            body: file,
-            headers: {
-                'Content-Type': 'image/jpeg' // Important: the content type should match the one you specified when generating the signed URL
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Upload failed: ${response.status}`);
-        }
-
-        if (!user) {
-            console.error("User is not authenticated");
-            return;
-        }
-        const idToken = await user.getIdToken(true);
-        const response1 = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/user/get-signed-url`, {
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + idToken
-            }
-        });
-        const res1 = await response1.json()
+        console.log("su", signedUrl)
+        await putProfileAvatarRequest(signedUrl, file as File)
+        const res1 = await refreshProfileAvatarSignedURLRequest(user)
         console.log(res1)
         setSignedURL(res1.signedUrl)
     }
@@ -182,58 +118,26 @@ export default function Dashboard() {
     const handleLikedMoviesClick = async (event: React.MouseEvent) => {
         event.preventDefault(); // prevent form submit
         console.log("Liked movies button clicked!"); // replace with actual implementation
-
         setMovieInfos([]); // Clear the current search results
         setShowCreateGroupForm(false); // Hide the form
-
-        if (!user) {
-            console.error("User is not authenticated");
-            return;
-        }
-        const idToken = await user.getIdToken(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/movies/liked-movies`, {
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + idToken,
-                'Content-Type': 'application/json'
-            }
-        })
-        if (response.ok) {
-            const res = await response.json();
-            console.log(`Liked movies for user: ${user.email}`, res);
-            setLikedMovies(res); // Add the liked movies to the state
-        } else {
-            console.error(`Error: ${response.status}`);
-        }
-    };
+        const res = await getLikedMoviesRequest(user)
+        if (res) setLikedMovies(res); // Add the liked movies to the state
+        else console.error(`Error: ${res}`);
+    }
 
     const handleGetGroupsClick = async (event: React.MouseEvent) => {
         event.preventDefault(); // prevent form submit
         console.log("get groups button clicked!"); // replace with actual implementation
-
         setMovieInfos([]); // Clear the current search results
         setLikedMovies([])
         setGroupInfos([])
         setShowCreateGroupForm(false); // Hide the form
-
-        if (!user) {
-            console.error("User is not authenticated");
-            return;
-        }
-        const idToken = await user.getIdToken(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/group/get-groups`, {
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + idToken,
-                'Content-Type': 'application/json'
-            }
-        })
-        if (response.ok) {
-            const res = await response.json();
-            console.log('user groups:', res);
-            setGroupInfos(res.content); // Add the liked movies to the state
+        const response = await getGroupsRequest(user)
+        if (response) {
+            console.log('user groups:', response);
+            setGroupInfos(response.content); // Add the liked movies to the state
         } else {
-            console.error(`Error: ${response.status}`);
+            console.error(`Error: ${response}`);
         }
     };
 
@@ -242,27 +146,13 @@ export default function Dashboard() {
         setGroupInfos([]);
         setLikedMovies([]); // Clear the current liked movies
         setShowCreateGroupForm(false); // Hide the form
-
-        if (!user) {
-            console.error("User is not authenticated");
+        const response = await searchMoviesRequest(user, searchQuery)
+        if (!response) {
+            console.error("Server response:", response);
             return;
         }
-
-        const idToken = await user.getIdToken(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/movies/search-movies?query=${searchQuery}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + idToken,
-                'Content-Type': 'application/json'
-            }
-        });
-        if (!response.ok) {
-            console.error("Server response:", response.status, response.statusText);
-            return;
-        }
-        const data = await response.json();
-        console.log("data:", data);
-        setMovieInfos(data.content)
+        console.log("data:", response);
+        setMovieInfos(response.content)
     };
 
     const handleSearchGroupsSubmit = async (event: React.FormEvent<HTMLFormElement> | string) => {
@@ -275,105 +165,30 @@ export default function Dashboard() {
         } else {
             event.preventDefault();
         }
-
-        //setSearchGroupsQuery("cv")
         setGroupInfos([])
         setMovieInfos([])
         setLikedMovies([]); // Clear the current liked movies
         setShowCreateGroupForm(false); // Hide the form
-
-        if (!user) {
-            console.error("User is not authenticated");
-            return;
-        }
-
-        const idToken = await user.getIdToken(true);
-
-        let data: any
-
         if (typeof event === 'string') {
             console.log("type string")
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/group/search-groups-get-last?query=${event}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + idToken,
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (!response.ok) {
-                console.error("Server response:", response.status, response.statusText);
+            const response = await searchGroupsGetLastRequest(user, event)
+            if (!response) {
+                console.error("Server response:", response);
                 return;
             }
-            data = await response.json();
             // @ts-ignore
-            setGroupInfos([data])
+            setGroupInfos([response])
         } else {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/group/search-groups?query=${searchGroupsQuery}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + idToken,
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (!response.ok) {
-                console.error("Server response:", response.status, response.statusText);
+            const response = await searchGroupsRequest(user, searchGroupsQuery)
+            if (!response) {
+                console.error("Server response:", response);
                 return;
             }
-            data = await response.json();
-            setGroupInfos(data.content)
+            setGroupInfos(response.content)
         }
         // @ts-ignore
         setGroupAvatarFile('')
     };
-
-    let attempts = 0
-    const handleRefreshProfileAvatarSignedURL = async () => {
-        console.log("refresh")
-        if (attempts >= 3) {  // only try to refresh the URL up to 3 times
-            console.error('Failed to load image after 3 attempts');
-            attempts = 0
-            return;
-        }
-
-        if (!user) {
-            console.error("User is not authenticated");
-            return;
-        }
-
-        const idToken = await user.getIdToken(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/user/get-signed-url`, {
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + idToken
-            }
-        });
-
-        const res = await response.json()
-        console.log("su", res.signedUrl)
-        setSignedURL(res.signedUrl)
-    }
-
-    let attempts1 = 0
-    const handleRefreshGroupAvatarSignedURL = async (groupInfoId: Number) => {
-        console.log("refresh")
-        if (attempts >= 3) {  // only try to refresh the URL up to 3 times
-            console.error('Failed to load image after 3 attempts');
-            attempts = 0
-            return;
-        }
-
-        if (!user) {
-            console.error("User is not authenticated");
-            return;
-        }
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/group/${groupInfoId}/get-signed-url`, {
-            method: 'GET'
-        });
-
-        const res = await response.json()
-        console.log("su", res.signedUrl)
-        setGroupSignedURL(res.signedUrl)
-    }
 
     async function handleCreateGroup(values: CreateGroupFormValues) {
         // Create the group without the avatar
@@ -382,22 +197,8 @@ export default function Dashboard() {
         let groupId = -1
         let resj : any
         try {
-            if (!user) {
-                console.error("User is not authenticated");
-                return;
-            }
-            const idToken = await user.getIdToken(true);
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/group/create-group`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + idToken,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(values),
-            });
-            const res = await response.json()
+            const res = await createGroupRequest(user, values)
             console.log("created group ", res)
-
             groupId = res.id
             resj = res
             // Clear the error message if there was one
@@ -415,19 +216,8 @@ export default function Dashboard() {
         if (groupAvatarFile) {
             // If the group creation was successful, proceed with uploading the avatar
             try {
-                //await uploadAvatar(values.avatar, groupId);
                 const signedUrl = await getGroupAvatarPutSignedUrl(groupId)
-                const response = await fetch(signedUrl, {
-                    method: 'PUT',
-                    body: groupAvatarFile,
-                    headers: {
-                        'Content-Type': 'image/jpeg' // Important: the content type should match the one you specified when generating the signed URL
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Upload failed: ${response.status}`);
-                }
+                await putGroupAvatarRequest(signedUrl, groupAvatarFile)
             } catch (error) {
                 console.error('Failed to upload avatar:', error);
                 // Show an error message to the user
@@ -437,7 +227,6 @@ export default function Dashboard() {
                 //deleteGroup(groupId);
             }
         }
-
         // After successful group creation and avatar upload, refresh the group list.
         // Here, we're calling the search groups function with a fake event to simulate a form submission.
         await handleSearchGroupsSubmit(resj.groupName);
@@ -452,8 +241,9 @@ if (!loading && user) {
                 <div style={{
                     borderRight: '3px solid white', /* Add a left border with 2px width and dotted style */
                     paddingRight: '6px', /* Add 10px of left margin to move the line to the left */
-                    marginRight: '10px',
-                    paddingLeft: '5px'
+                    marginRight: '0px',
+                    paddingLeft: '5px',
+
                 }}>
                     <h1 style={{ paddingLeft: '5px' }}>{user.email}</h1>
                     <div style={{ paddingLeft:'5px', display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
@@ -476,11 +266,14 @@ if (!loading && user) {
                             onChange={handleSearchChange}
                             placeholder="Search for movies..."
                         />
+
                         <div>
                             <button type="submit">
                                 Search for Movies
                             </button>
                         </div>
+
+
                         <div>
                             <button onClick={handleCreateGroupClick}>
                                 Create Group
@@ -521,9 +314,11 @@ if (!loading && user) {
                             placeholder="Search for groups..."
                         />
 
-                        <button type="submit">
-                            Search for Groups
-                        </button>
+                        <div>
+                            <button type="submit">
+                                Search for Groups
+                            </button>
+                        </div>
 
                         <SignOut/>
                     </form>
@@ -538,17 +333,17 @@ if (!loading && user) {
                         <>
                             {likedMovies.length > 0 ? (
                                 <>
-                                    <h1>Liked Movies</h1>
+                                    <h1 style={{paddingLeft: '10px'}}>Liked Movies</h1>
                                     <SearchResultsList movies={likedMovies}/>
                                 </>
                             ) : movieInfos.length > 0 ? (
                                 <>
-                                    <h1>{movieInfos.length > 0 ? 'Search Results' : ''}</h1>
+                                    <h1 style={{paddingLeft: '10px'}}>{movieInfos.length > 0 ? 'Search Results' : ''}</h1>
                                     <SearchResultsList movies={movieInfos}/>
                                 </>
                             ) : groupInfos.length >0 ? (
                                 <>
-                                    <h1>Groups</h1>
+                                    <h1 style={{paddingLeft: '10px'}}>Groups</h1>
                                     <GroupList groups={groupInfos}/>
                                 </>
                             ) : null}
