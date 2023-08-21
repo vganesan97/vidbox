@@ -14,4 +14,5 @@ interface MovieInfoTopRatedProjection {
     val release_date: Date?
     val movie_id: Int?
     val liked: Boolean?
+    val reviewContent: String?
 }

@@ -20,16 +20,28 @@ class ReviewController(private val userRepository: UserRepository,
     fun createReview(@RequestBody reviewModel: ReviewModel, request: HttpServletRequest): ResponseEntity<Any> {
         return try {
             val uid = firebaseService.getUidFromFirebaseToken(request = request)
-            val user = userRepository.findByFirebaseUid(uid)
-            val savedReview = ReviewEntity(
-                userId = user.id,
-                movieId = reviewModel.movieId,
-                reviewContent = reviewModel.reviewContent)
-            reviewRepository.save(savedReview)
+            val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+            val existingReview = reviewRepository.findByUserIdAndMovieId(userId, reviewModel.movieId)
+            val savedReview: ReviewEntity
+            if (existingReview != null) {
+                // Update the existing review
+                existingReview.reviewContent = reviewModel.reviewContent
+                savedReview = reviewRepository.save(existingReview)
+                println("updated review $savedReview")
+            } else {
+                // Create a new review
+                savedReview = ReviewEntity(
+                    userId = userId,
+                    movieId = reviewModel.movieId,
+                    reviewContent = reviewModel.reviewContent)
+                reviewRepository.save(savedReview)
+                println("saved review $savedReview")
+            }
             ResponseEntity.ok(savedReview)
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(reviewModel)
         }
     }
+
 
 }

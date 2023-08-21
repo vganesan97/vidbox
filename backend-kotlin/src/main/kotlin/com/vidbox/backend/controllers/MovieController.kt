@@ -62,7 +62,9 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
     fun likedMovies(request: HttpServletRequest): ResponseEntity<Any> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
-        val likedMovies = movieLikesRepository.findLikedMoviesByUserId(userId)
+        //val likedMovies = movieLikesRepository.findLikedMoviesByUserId(userId)
+        val likedMovies = movieLikesRepository.findLikedMoviesByUserId4(userId)
+        println("reviews for liked movies: ${likedMovies.map { "${it.title} ${it.reviewContent}" }}")
         return ResponseEntity.ok(likedMovies)
     }
 
@@ -74,7 +76,6 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
         val pageable = PageRequest.of(page, size)
-        //val resultsPage = movieRepository.findByTitleContains2(query, pageable, userId)
         val pc = pineconeQuery(query)
         val rp1 = movieRepository.findByIdsAndUser(userId, pc, pageable)
         return ResponseEntity.ok(rp1)

@@ -16,6 +16,7 @@ type Movie = {
     release_date: number;
     movie_id: number;
     liked: boolean;
+    reviewContent: string;
 }
 
 type MovieProps = {
@@ -37,8 +38,6 @@ const Movie = ({ movie }: MovieProps) => {
     const [showForm, setShowForm] = useState(false);
     const [errorMsg, setErrorMsg] = useState({code: '', msg: ''})
     const [errorModalOpen, setErrorModalOpen] = useState(false);
-
-
 
     const handleFormClick = (event: React.MouseEvent) => {
         event.stopPropagation(); // Prevent the click event from bubbling up
@@ -74,24 +73,52 @@ const Movie = ({ movie }: MovieProps) => {
         cursor: 'pointer', // Changes the cursor to a hand when hovering over the div
         marginBottom: '10px',
         backgroundColor: isHovered ? '#444444' : '',// Add some margin between the movies
-        backgroundImage: `url(${imgUrl}${movie.backdrop_path})`
+        backgroundImage: `url(${imgUrl}${movie.backdrop_path})`,
     };
 
+    // const formStyle: React.CSSProperties = {
+    //     position: 'absolute', // Absolutely position the form
+    //     right: '2%',
+    //     top: '20%', // Align it to the top of the container
+    //     left: '20%', // Align it to the right of the container
+    //     background: 'rgba(0, 0, 0, 0.7)', // Semi-transparent black background over the image
+    //     display: showForm ? 'flex' : 'none', // Show or hide the form
+    //     padding: '10px',
+    //     color: '#fff',
+    //     // Add other styles for the form
+    // };
+
     const formStyle: React.CSSProperties = {
-        position: 'absolute', // Absolutely position the form
-        right: '2%',
+        width: '80%', // Take up 80% of the container's width
         top: '20%', // Align it to the top of the container
-        left: '20%', // Align it to the right of the container
-        background: 'rgba(0, 0, 0, 0.7)', // Semi-transparent black background over the image
-        display: showForm ? 'block' : 'none', // Show or hide the form
-        padding: '10px',
+        left: '20%',
+        background: 'rgba(0, 0, 0, 0.7)',
         color: '#fff',
-        // Add other styles for the form
+        display: showForm ? 'flex' : 'none', // Show or hide the form
+        flexDirection: 'column', // Stack the form elements vertically
+        padding: '10px',
+        borderRadius: '5px', // Add some rounding to the corners
+        // Other styles
+    };
+
+
+    const formStyle1: React.CSSProperties = {
+        position: 'absolute',
+        width: '80%', // Take up 80% of the container's width
+        top: '20%', // Align it to the top of the container
+        left: '20%',
+        background: 'rgba(0, 0, 0, 0.7)',
+        color: '#fff',
+        display:'flex', // Show or hide the form
+        flexDirection: 'column', // Stack the form elements vertically
+        padding: '10px',
+        borderRadius: '5px', // Add some rounding to the corners
+        // Other styles
     };
 
     const containerStyle: React.CSSProperties = {
         position: 'relative', // Set to relative so the absolute positioning of the form is relative to this container
-        //display: 'flex', // Use flexbox to align movie poster and form side by side
+        display: 'flex', // Use flexbox to align movie poster and form side by side
         cursor: 'pointer',
         marginBottom: '10px',
         backgroundImage: `url(${imgUrl}${movie.backdrop_path})`, // Set the background image for the whole container
@@ -124,7 +151,7 @@ const Movie = ({ movie }: MovieProps) => {
                         style={{ background: 'transparent', border: 'none', color: 'white', marginTop: '-8px' }}>{isLiked ? '❤️' : '♡'}️
                     </button>
                 </div>
-                <div style={{paddingLeft: '10px', marginTop: '-13px'}}>
+                <div style={{paddingLeft: '10px', marginTop: '-13px', display: 'flex'}}>
                     <ImageComponent
                         user={{}}
                         src={`${imgUrl}${movie.poster_path}`}
@@ -132,14 +159,21 @@ const Movie = ({ movie }: MovieProps) => {
                         fromMovie={true}
                     />
                 </div>
-                <div style={{ paddingLeft: '10px', background: 'linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.2))', color: '#fff', padding: '10px' }}>
+                <div style={{
+                    paddingLeft: '10px',
+                    background: 'linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.2))',
+                    color: '#fff',
+                    padding: '10px',
+                }}>
                     <b>{movie.overview}</b>
                 </div>
-                {/* ... existing movie rendering code, including poster, title, like button, and overview ... */}
             </div>
+            {/*<div style={formStyle1}>*/}
+            {/*    <b>{movie.reviewContent ? movie.reviewContent : ''}</b>*/}
+            {/*</div>*/}
             <div style={formStyle} onClick={handleFormClick}>
                 <Formik
-                    initialValues={{ reviewContent: '', movieId: movie.id }}
+                    initialValues={{ reviewContent: movie.reviewContent ? movie.reviewContent : '', movieId: movie.id }}
                     validateOnChange={false} // Only validate the form when the submit button is clicked
                     validateOnBlur={false}
                     validate={values => {
@@ -159,7 +193,24 @@ const Movie = ({ movie }: MovieProps) => {
                         <Form>
                             <div>
                                 <label style={{ fontSize: '25px', height: '30px', fontWeight: 'bold' }} htmlFor="reviewContent">Review</label>
-                                <Field as="textarea" id="reviewContent" name="reviewContent" rows="10" cols="100" />
+                                {/*<Field as="textarea" id="reviewContent" name="reviewContent" rows="10" cols="100" />*/}
+                                <Field
+                                    as="textarea"
+                                    id="reviewContent"
+                                    name="reviewContent"
+                                    rows="10"
+                                    cols="100"
+                                    style={{
+                                        fontFamily: 'Arial, sans-serif',
+                                        fontSize: '16px',
+                                        padding: '10px',
+                                        width: '100%',
+                                        height: '100px',
+                                        border: '1px solid #ccc',
+                                        borderRadius: '5px',
+                                        resize: 'vertical'
+                                    }}
+                                />
                                 <ErrorMessage name="reviewContent" component="div" />
                             </div>
 
@@ -175,13 +226,6 @@ const Movie = ({ movie }: MovieProps) => {
                         </Form>
                     )}
                 </Formik>
-                {/*<form>*/}
-                {/*    <input type="text" placeholder="Your Name" style={inputStyle} />*/}
-                {/*    <input type="email" placeholder="Your Email" style={inputStyle} />*/}
-                {/*    <textarea placeholder="Your Message" style={inputStyle}></textarea>*/}
-                {/*    <button type="submit" style={buttonStyle}>Send</button>*/}
-                {/*    <button type="button" onClick={handleClick} style={buttonStyle}>Close</button>*/}
-                {/*</form>*/}
             </div>
         </div>
     );

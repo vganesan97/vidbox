@@ -121,6 +121,7 @@ export default function Dashboard() {
         setMovieInfos([]); // Clear the current search results
         setShowCreateGroupForm(false); // Hide the form
         const res = await getLikedMoviesRequest(user)
+        console.log("liked movies request data: ", res)
         if (res) setLikedMovies(res); // Add the liked movies to the state
         else console.error(`Error: ${res}`);
     }
@@ -259,6 +260,23 @@ if (!loading && user) {
                             <h1>{router.query.lastName}</h1>
                         </div>
                     </div>
+                    <div>
+                        <h2 style={{ paddingLeft: '5px' }}>
+                            <label
+                                htmlFor="fileInput"
+                                className="custom-file-upload"
+                                style={{cursor: "pointer", textDecoration: "underline", color: "blue"}}
+                            >
+                                Upload a Profile Pic
+                            </label>
+                        </h2>
+                        <input
+                            type="file"
+                            id="fileInput"
+                            accept="image/jpeg"
+                            onChange={handleUpdateProfileAvatar}
+                            style={{display: 'none'}}/>
+                    </div>
                     <form onSubmit={handleSearchSubmit} >
                         <input
                             type="text"
@@ -272,31 +290,14 @@ if (!loading && user) {
                                 Search for Movies
                             </button>
                         </div>
-
-
-                        <div>
-                            <button onClick={handleCreateGroupClick}>
-                                Create Group
-                            </button>
-                            <h2 style={{ paddingLeft: '5px' }}>
-                                <label
-                                    htmlFor="fileInput"
-                                    className="custom-file-upload"
-                                    style={{cursor: "pointer", textDecoration: "underline", color: "blue"}}
-                                >
-                                    Upload a Profile Pic
-                                </label>
-                            </h2>
-                            <input
-                                type="file"
-                                id="fileInput"
-                                accept="image/jpeg"
-                                onChange={handleUpdateProfileAvatar}
-                                style={{display: 'none'}}/>
-                        </div>
                         <div>
                             <button onClick={handleLikedMoviesClick}>
                                 Liked Movies
+                            </button>
+                        </div>
+                        <div>
+                            <button onClick={handleCreateGroupClick}>
+                                Create Group
                             </button>
                         </div>
                         <div>

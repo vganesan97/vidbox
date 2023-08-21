@@ -53,7 +53,7 @@ export default function Home() {
             const userCredential = await signInWithEmailAndPassword(values.username, values.password);
             if (userCredential == null) return
             const res = await signInRequest(userCredential.user, values)
-            const res1 = await refreshProfileAvatarSignedURLRequest(user)
+            const res1 = await refreshProfileAvatarSignedURLRequest(userCredential.user)
             router.push({
                 pathname: '/dashboard',
                 query: {
