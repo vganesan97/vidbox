@@ -30,11 +30,11 @@ class ReviewController(private val userRepository: UserRepository,
                 println("updated review $savedReview")
             } else {
                 // Create a new review
-                savedReview = ReviewEntity(
+                val review = ReviewEntity(
                     userId = userId,
                     movieId = reviewModel.movieId,
                     reviewContent = reviewModel.reviewContent)
-                reviewRepository.save(savedReview)
+                savedReview = reviewRepository.save(review)
                 println("saved review $savedReview")
             }
             ResponseEntity.ok(savedReview)

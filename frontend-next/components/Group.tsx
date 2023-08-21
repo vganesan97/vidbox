@@ -26,12 +26,18 @@ const Group = ({ group }: GroupProps) =>  {
     }
 
     return (
-        <div>
+        <div style={{
+            width: '300%',
+            marginLeft: '2%',
+            borderBottom: '1px solid #ccc', // Add a 1px solid light grey line
+            paddingBottom: '15px', // Add some padding to space out the line from the content
+            marginBottom: '15px',
+        }}>
             <h1>Group Name: {group.groupName}</h1>
-            <h2>Group Description: {group.groupDescription}</h2>
-            <h2>Privacy: {group.privacy}</h2>
-            <h2>Member: {group.isMember ? 'true' : 'false'}</h2>
-            <div style={{display: 'flex', alignItems: 'center'}}>
+            <h1>Group Description: {group.groupDescription}</h1>
+            <h1>Privacy: {group.privacy}</h1>
+            <h1>Member: {group.isMember ? 'true' : 'false'}</h1>
+            <div style={{display: 'flex', alignItems: 'center', }}>
                 <ImageComponent user={{}} src={group.groupAvatar} alt={"Group Avatar"}/>
                 {/*<img*/}
                 {/*    src={group.groupAvatar}*/}

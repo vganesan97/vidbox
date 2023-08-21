@@ -33,19 +33,15 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
     @PostMapping("/like-movie")
     fun likeMovie(@RequestBody like: MovieLikes, request: HttpServletRequest): ResponseEntity<Any> {
         val movieId = like.movieId ?: throw IllegalArgumentException("Movie ID is null")
-
         return try {
             val uid = firebaseService.getUidFromFirebaseToken(request = request)
             val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
-
             val existingLike = movieLikesRepository.findByUserIdAndMovieId(userId, movieId)
-
             if (existingLike == null) {
-                val savedLike = MovieLikes(
+                val movieLike = MovieLikes(
                     userId = userId,
-                    movieId = movieId
-                )
-                val saved = movieLikesRepository.save(savedLike)
+                    movieId = movieId)
+                val savedLike = movieLikesRepository.save(movieLike)
                 println("saved like $savedLike")
                 ResponseEntity.ok(mapOf("liked" to true))
             } else {
@@ -62,7 +58,6 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
     fun likedMovies(request: HttpServletRequest): ResponseEntity<Any> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
-        //val likedMovies = movieLikesRepository.findLikedMoviesByUserId(userId)
         val likedMovies = movieLikesRepository.findLikedMoviesByUserId4(userId)
         println("reviews for liked movies: ${likedMovies.map { "${it.title} ${it.reviewContent}" }}")
         return ResponseEntity.ok(likedMovies)
@@ -75,48 +70,47 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
                      request: HttpServletRequest): ResponseEntity<Page<MovieInfoTopRatedProjection>> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
-        val pageable = PageRequest.of(page, size)
-        val pc = pineconeQuery(query)
-        val rp1 = movieRepository.findByIdsAndUser(userId, pc, pageable)
-        return ResponseEntity.ok(rp1)
+        val pinceoneQueryResult = pineconeQuery(query)
+        val movies = movieRepository.findByIdsAndUser(userId, pinceoneQueryResult, PageRequest.of(page, size))
+        return ResponseEntity.ok(movies)
     }
 
     fun pineconeQuery(query: String): List<Int> {
         val client = OkHttpClient()
         // Specify the model and input text
-        val jsonString = """{
+        val searchQueryJsonString = """{
             "model": "text-embedding-ada-002",
             "input": "$query"
         }"""
-        val requestBody: okhttp3.RequestBody = jsonString.toRequestBody("application/json".toMediaTypeOrNull())
-        val request0 = Request.Builder()
-                .url("https://api.openai.com/v1/embeddings")
-                .post(requestBody)
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", "Bearer $openaiSecret") // Replace with your actual API key
-                .build()
-        client.newCall(request0).execute().use { response ->
-            if (!response.isSuccessful) throw IOException("Unexpected code $response")
-            val responseBody = response.body?.string() ?: "No response body"
-            val jsonObject = JsonParser.parseString(responseBody).asJsonObject
-            val data = jsonObject["data"].asJsonArray[0].asJsonObject["embedding"].asJsonArray
-            val requestBodyJson = """{
-                    "topK": 10,
-                    "vector": $data
+        val openAIEmbeddingRequestBody: okhttp3.RequestBody = searchQueryJsonString.toRequestBody("application/json".toMediaTypeOrNull())
+        val openAIEmbeddingRequest = Request.Builder()
+            .url("https://api.openai.com/v1/embeddings")
+            .post(openAIEmbeddingRequestBody)
+            .addHeader("Content-Type", "application/json")
+            .addHeader("Authorization", "Bearer $openaiSecret") // Replace with your actual API key
+            .build()
+        client.newCall(openAIEmbeddingRequest).execute().use { embeddingResponse ->
+            if (!embeddingResponse.isSuccessful) throw IOException("Unexpected code $embeddingResponse")
+            val embeddingResponseBody = embeddingResponse.body?.string() ?: "No response body"
+            val embeddingJsonObject = JsonParser.parseString(embeddingResponseBody).asJsonObject
+            val embeddedVector = embeddingJsonObject["data"].asJsonArray[0].asJsonObject["embedding"].asJsonArray
+            val pineconeRequestBodyJson = """{
+                "topK": 10,
+                "vector": $embeddedVector
             }"""
-            val request3 = Request.Builder()
-                    .url("$pineconeDbUrl/query")
-                    .post(requestBodyJson.toRequestBody("application/json".toMediaTypeOrNull()))
-                    .addHeader("accept", "application/json")
-                    .addHeader("content-type", "application/json")
-                    .addHeader("Api-Key", pineconeApiKey)
-                    .build()
-            client.newCall(request3).execute().use { response1 ->
-                if (!response1.isSuccessful) throw IOException("Unexpected code $response1")
-                val res = response1.body?.string() ?: "No response body"
-                val jsonObject1 = JsonParser.parseString(res).asJsonObject["matches"].asJsonArray
-                val ids = jsonObject1.map { it.asJsonObject.get("id").asString.toInt() }
-                return ids
+            val pineconeRequest = Request.Builder()
+                .url("$pineconeDbUrl/query")
+                .post(pineconeRequestBodyJson.toRequestBody("application/json".toMediaTypeOrNull()))
+                .addHeader("accept", "application/json")
+                .addHeader("content-type", "application/json")
+                .addHeader("Api-Key", pineconeApiKey)
+                .build()
+            client.newCall(pineconeRequest).execute().use { pineconeResponse ->
+                if (!pineconeResponse.isSuccessful) throw IOException("Unexpected code $pineconeResponse")
+                val res = pineconeResponse.body?.string() ?: "No response body"
+                val pineconeJsonObject = JsonParser.parseString(res).asJsonObject["matches"].asJsonArray
+                val movieIds = pineconeJsonObject.map { it.asJsonObject.get("id").asString.toInt() }
+                return movieIds
             }
         }
     }

@@ -241,17 +241,14 @@ if (!loading && user) {
             <div style={{display: 'flex'}}>
                 <div style={{
                     borderRight: '3px solid white', /* Add a left border with 2px width and dotted style */
-                    paddingRight: '6px', /* Add 10px of left margin to move the line to the left */
-                    marginRight: '0px',
+                    paddingRight: '8px', /* Add 10px of left margin to move the line to the left */
+                    marginRight: '',
                     paddingLeft: '5px',
-
                 }}>
-                    <h1 style={{ paddingLeft: '5px' }}>{user.email}</h1>
+                    <h1 style={{ paddingLeft: '5px'}}>{user.email}</h1>
                     <div style={{ paddingLeft:'5px', display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
                         {signedURL.length > 0 ? (
-                            <>
-                                <ImageComponent user={user} src={signedURL} alt={"Group Avatar"}/>
-                            </>
+                            <ImageComponent user={user} src={signedURL} alt={"Group Avatar"}/>
                         ) : (
                             <></>
                         )}
@@ -334,17 +331,17 @@ if (!loading && user) {
                         <>
                             {likedMovies.length > 0 ? (
                                 <>
-                                    <h1 style={{paddingLeft: '10px'}}>Liked Movies</h1>
+                                    <h1 style={{paddingLeft: '0.6%', textDecoration: 'underline'}}>Liked Movies</h1>
                                     <SearchResultsList movies={likedMovies}/>
                                 </>
                             ) : movieInfos.length > 0 ? (
                                 <>
-                                    <h1 style={{paddingLeft: '10px'}}>{movieInfos.length > 0 ? 'Search Results' : ''}</h1>
+                                    <h1 style={{paddingLeft: '0.6%', textDecoration: 'underline'}}>{movieInfos.length > 0 ? 'Search Results' : ''}</h1>
                                     <SearchResultsList movies={movieInfos}/>
                                 </>
                             ) : groupInfos.length >0 ? (
                                 <>
-                                    <h1 style={{paddingLeft: '10px'}}>Groups</h1>
+                                    <h1 style={{paddingLeft: '2%', textDecoration: 'underline'}}>Groups</h1>
                                     <GroupList groups={groupInfos}/>
                                 </>
                             ) : null}
