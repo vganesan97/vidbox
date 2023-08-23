@@ -194,10 +194,10 @@ const Movie = ({ movie }: MovieProps) => {
                                 marginBottom: '1%',
                                 fontSize: '200%'
                             }}>
-                                Review
+                                My Review
                             </h2>
                             <b style={{
-                                width: '70%',
+                                width: '100%',
                                 height: '70%',
                                 border: '2px solid white', // White border
                                 borderRadius: '15px', // Optional: rounding the corners
@@ -246,7 +246,7 @@ const Movie = ({ movie }: MovieProps) => {
                                 alignItems: 'flex-start',
                                 width: '100%',
                             }}>
-                                <label style={{ fontSize: '200%', fontWeight: 'bold', marginLeft: '1%' }} htmlFor="reviewContent">Review</label>
+                                <label style={{ fontSize: '200%', fontWeight: 'bold', marginLeft: '1%' }} htmlFor="reviewContent">My Review</label>
                                 {/*<Field as="textarea" id="reviewContent" name="reviewContent" rows="10" cols="100" />*/}
                                 <Field
                                     as="textarea"

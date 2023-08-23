@@ -33,12 +33,16 @@ const Group = ({ group }: GroupProps) =>  {
             paddingBottom: '15px', // Add some padding to space out the line from the content
             marginBottom: '15px',
         }}>
-            <h1>Group Name: {group.groupName}</h1>
+            <div style={{ paddingLeft:'5px', display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                <ImageComponent user={{}} src={group.groupAvatar} alt={"Group Avatar"}/>
+                <div style={{ marginLeft: '10px' }}>
+                    <h1>{group.groupName}</h1>
+                </div>
+            </div>
             <h1>Group Description: {group.groupDescription}</h1>
             <h1>Privacy: {group.privacy}</h1>
             <h1>Member: {group.isMember ? 'true' : 'false'}</h1>
             <div style={{display: 'flex', alignItems: 'center', }}>
-                <ImageComponent user={{}} src={group.groupAvatar} alt={"Group Avatar"}/>
                 {/*<img*/}
                 {/*    src={group.groupAvatar}*/}
                 {/*    onError={() => handleRefreshGroupAvatarSignedURL(group.id)}*/}
