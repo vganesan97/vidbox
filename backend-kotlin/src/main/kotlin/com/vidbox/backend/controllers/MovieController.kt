@@ -90,12 +90,12 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
 
     fun pineconeRecommendations(likedMovies: List<MovieInfoTopRatedProjection>): List<Int> {
         val likedMovieIds = likedMovies.map { it.id }.toSet() // Collect IDs of liked movies
+        val queryParamIds = likedMovies.map { it.id }.joinToString(separator = "&") { "ids=$it" }
+        println("id string: $queryParamIds")
 
-        val ids = likedMovies.map { it.id }.joinToString(separator = "&") { "ids=$it" }
-        println("id string: $ids")
-
+        // find the vectors corresponding to the ids of the liked movies
         val pineconeRequest = Request.Builder()
-            .url("$pineconeDbUrl/vectors/fetch?${ids}")
+            .url("$pineconeDbUrl/vectors/fetch?${queryParamIds}")
             .get()
             .addHeader("accept", "application/json")
             .addHeader("Api-Key", pineconeApiKey)
@@ -106,25 +106,38 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
             val res = pineconeResponse.body?.string() ?: "No response body"
             val pineconeJsonObject = JsonParser.parseString(res).asJsonObject["vectors"].asJsonObject
 
-            var sumArray: Array<BigDecimal>? = null
-            var vectorCount = 0
-            for ((key, value) in pineconeJsonObject.entrySet()) {
-                val vector = value.asJsonObject["values"].asJsonArray.map { it.asBigDecimal }
-                println("Vector for key = $key: $vector")
-                if (sumArray == null) {
-                    sumArray = Array(vector.size) { BigDecimal.ZERO }
-                }
-                for (i in vector.indices) {
-                    sumArray[i] = sumArray[i].add(vector[i])
-                }
-                vectorCount++
-            }
-            val avgArray = sumArray!!.map { it.divide(BigDecimal(vectorCount), MathContext.DECIMAL64) }
-            println("Average Vector: $avgArray")
+//            // average the vectors of liked movies
+//            var sumArray: Array<BigDecimal>? = null
+//            var vectorCount = 0
+//            for ((key, value) in pineconeJsonObject.entrySet()) {
+//                val vector = value.asJsonObject["values"].asJsonArray.map { it.asBigDecimal }
+//                println("Vector for key = $key: $vector")
+//                if (sumArray == null) {
+//                    sumArray = Array(vector.size) { BigDecimal.ZERO }
+//                }
+//                for (i in vector.indices) {
+//                    sumArray[i] = sumArray[i].add(vector[i])
+//                }
+//                vectorCount++
+//            }
+//            val avgLikedMoviesVector = sumArray!!.map { it.divide(BigDecimal(vectorCount), MathContext.DECIMAL64) }
+//            println("Average Vector: $avgLikedMoviesVector")
 
+            var vectorCount = 0
+            val summedVectors = pineconeJsonObject.entrySet()
+                .map { (_, value) ->
+                    value.asJsonObject["values"].asJsonArray.map { it.asBigDecimal } }
+                .reduce { acc, vector ->
+                    if (acc.size != vector.size) throw IllegalArgumentException("Vectors must have the same size")
+                    vectorCount++
+                    acc.zip(vector).map { (accValue, vecValue) -> accValue.add(vecValue) } }
+            val avgLikedMoviesVector = summedVectors.map { it.divide(BigDecimal(vectorCount), MathContext.DECIMAL64) }
+            println("Average Vector: $avgLikedMoviesVector")
+
+            // find the most similar vectors to the averaged liked movies vector
             val pineconeRequestBodyJson = """{
                 "topK": 100,
-                "vector": $avgArray
+                "vector": $avgLikedMoviesVector
             }"""
             val pineconeRequest = Request.Builder()
                 .url("$pineconeDbUrl/query")

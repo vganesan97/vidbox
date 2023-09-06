@@ -37,7 +37,7 @@ interface MovieLikesRepository : JpaRepository<MovieLikes, Int> {
                TRUE AS liked
         FROM movie_infos_top_rated m
         JOIN movie_likes l ON m.id = l.movie_id
-        LEFT JOIN reviews r ON m.id = r.movie_id
+        LEFT JOIN reviews r ON m.id = r.movie_id AND r.user_id = :userId
         WHERE l.user_id = :userId
     """, nativeQuery = true)
     fun findLikedMoviesByUserId4(userId: Int): List<MovieInfoTopRatedProjection>
