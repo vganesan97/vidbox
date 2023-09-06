@@ -111,10 +111,42 @@ export const getLikedMoviesRequest = async (user: any) => {
     }
 }
 
+export const getRecommendedMoviesRequest = async (user: any) => {
+    try {
+        const client = await vidboxApiClient(user);
+        const response = await client.get('/movies/recommendations')
+        return response.data
+    } catch (error) {
+        console.error("An error occurred:", error)
+    }
+}
+
 export const getGroupsRequest = async (user: any) => {
     try {
         const client = await vidboxApiClient(user);
         const response = await client.get('/group/get-groups')
+        console.log(response.data)
+        return response.data
+    } catch (error) {
+        console.error("An error occurred:", error)
+    }
+}
+
+export const getPublicUsersRequest = async (user: any) => {
+    try {
+        const client = await vidboxApiClient(user);
+        const response = await client.get('/user/public-users')
+        console.log(response.data)
+        return response.data
+    } catch (error) {
+        console.error("An error occurred:", error)
+    }
+}
+
+export const getFriendsRequest = async (user: any) => {
+    try {
+        const client = await vidboxApiClient(user);
+        const response = await client.get('/user/friends')
         console.log(response.data)
         return response.data
     } catch (error) {

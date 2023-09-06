@@ -78,4 +78,60 @@ class UserController(private val userRepository: UserRepository,
                 profilePic = if (user.profilePic != null) user.profilePic!! else ""
         ))
     }
+
+    @PostMapping("/public-users")
+    fun getPublicUsers(@RequestBody userCreds: NewUserCreds): ResponseEntity<LoginResponse> {
+        val username = userCreds.username
+        val password = userCreds.password
+        val firstName = userCreds.firstName
+        val lastName = userCreds.lastName
+        val dob = LocalDate.parse(userCreds.dob)
+        val uid = firebaseService.getUidFromFirebaseToken(idToken = userCreds.idToken)
+
+        val user = User(
+            username = username,
+            password = password,
+            firstName = firstName,
+            lastName = lastName,
+            dob = dob,
+            firebaseUid = uid)
+        userRepository.save(user)
+
+        return ResponseEntity.ok(LoginResponse(
+            message = "Successfully created user",
+            username = userCreds.username,
+            firstName = "unknown",
+            lastName = "unknown",
+            uid = user.firebaseUid!!,
+            profilePic = if (user.profilePic != null) user.profilePic!! else ""
+        ))
+    }
+
+    @PostMapping("/friends")
+    fun getFriends(@RequestBody userCreds: NewUserCreds): ResponseEntity<LoginResponse> {
+        val username = userCreds.username
+        val password = userCreds.password
+        val firstName = userCreds.firstName
+        val lastName = userCreds.lastName
+        val dob = LocalDate.parse(userCreds.dob)
+        val uid = firebaseService.getUidFromFirebaseToken(idToken = userCreds.idToken)
+
+        val user = User(
+            username = username,
+            password = password,
+            firstName = firstName,
+            lastName = lastName,
+            dob = dob,
+            firebaseUid = uid)
+        userRepository.save(user)
+
+        return ResponseEntity.ok(LoginResponse(
+            message = "Successfully created user",
+            username = userCreds.username,
+            firstName = "unknown",
+            lastName = "unknown",
+            uid = user.firebaseUid!!,
+            profilePic = if (user.profilePic != null) user.profilePic!! else ""
+        ))
+    }
 }

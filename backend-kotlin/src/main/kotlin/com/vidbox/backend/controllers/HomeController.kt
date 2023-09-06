@@ -16,6 +16,7 @@ import com.google.cloud.storage.*
 import com.vidbox.backend.getAuthorizationUrl
 import org.jsoup.Jsoup
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.servlet.view.RedirectView
 import java.io.*
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
@@ -80,7 +81,7 @@ class HomeController() {
     }
 
     @GetMapping("/")
-    fun home(@RequestParam(name = "code", required = false) authorizationCode: String?) {
+    fun home(@RequestParam(name = "code", required = false) authorizationCode: String?): Any {
         //if (authorizationCode == null) return "<h1 style=\"color: green;\"> The backend service has started 😊 </h1>"
 
         val CLIENTSECRETS_LOCATION = "backend-kotlin/src/main/kotlin/com/vidbox/backend/oauth2_secret.json"
@@ -154,10 +155,12 @@ class HomeController() {
             extractMovieName(decodedMsg)
         }
 
-//        return listOf(
-//            movieNames,
-//            messages.messages
-//        )
+        return RedirectView("http://localhost:3001/dashboard")
+
+        return listOf(
+            movieNames,
+            messages
+        )
         //return "<h1 style=\"color: green;\"> Tokens received: ${listResponse.labels} 😊 </h1>"
         //return RedirectView("http://localhost:3001/dashboard")
     }

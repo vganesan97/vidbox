@@ -10,11 +10,11 @@ import GroupList from "@/components/GroupList";
 import SignOut from "@/components/SignOut";
 import ImageComponent from "@/components/ImageComponent";
 import {
-    createGroupRequest,
+    createGroupRequest, getFriendsRequest,
     getGroupAvatarPutSignedUrlRequest,
     getGroupsRequest,
     getLikedMoviesRequest,
-    getProfileAvatarPutSignedUrlRequest, putGroupAvatarRequest,
+    getProfileAvatarPutSignedUrlRequest, getPublicUsersRequest, getRecommendedMoviesRequest, putGroupAvatarRequest,
     putProfileAvatarRequest,
     refreshProfileAvatarSignedURLRequest,
     searchGroupsGetLastRequest,
@@ -29,7 +29,13 @@ export default function Dashboard() {
 
     const [movieInfos, setMovieInfos] = useState([])
     const [groupInfos, setGroupInfos] = useState([])
+    const [friendInfos, setFriendInfos] = useState([])
+    const [publicUsersInfos, setPublicUsersInfos] = useState([])
+
+
     const [likedMovies, setLikedMovies] = useState<Movie[]>([])
+    const [recommendedMovies, setRecommendedMovies] = useState<Movie[]>([])
+
 
     const [searchQuery, setSearchQuery] = useState('');
     const [searchGroupsQuery, setSearchGroupsQuery] = useState('');
@@ -119,10 +125,23 @@ export default function Dashboard() {
         event.preventDefault(); // prevent form submit
         console.log("Liked movies button clicked!"); // replace with actual implementation
         setMovieInfos([]); // Clear the current search results
+        setRecommendedMovies([])
         setShowCreateGroupForm(false); // Hide the form
         const res = await getLikedMoviesRequest(user)
         console.log("liked movies request data: ", res)
         if (res) setLikedMovies(res); // Add the liked movies to the state
+        else console.error(`Error: ${res}`);
+    }
+
+    const handleRecommendedMoviesClick = async (event: React.MouseEvent) => {
+        event.preventDefault(); // prevent form submit
+        console.log("Recommended movies button clicked!"); // replace with actual implementation
+        setMovieInfos([]); // Clear the current search results
+        setLikedMovies([])
+        setShowCreateGroupForm(false); // Hide the form
+        const res = await getRecommendedMoviesRequest(user)
+        console.log("recommended movies request data: ", res)
+        if (res) setRecommendedMovies(res); // Add the liked movies to the state
         else console.error(`Error: ${res}`);
     }
 
@@ -131,6 +150,7 @@ export default function Dashboard() {
         console.log("get groups button clicked!"); // replace with actual implementation
         setMovieInfos([]); // Clear the current search results
         setLikedMovies([])
+        setRecommendedMovies([])
         setGroupInfos([])
         setShowCreateGroupForm(false); // Hide the form
         const response = await getGroupsRequest(user)
@@ -142,10 +162,49 @@ export default function Dashboard() {
         }
     };
 
+    const handleGetFriendsClick = async (event: React.MouseEvent) => {
+        event.preventDefault(); // prevent form submit
+        console.log("get friends button clicked!"); // replace with actual implementation
+        setMovieInfos([]); // Clear the current search results
+        setLikedMovies([])
+        setRecommendedMovies([])
+        setGroupInfos([])
+        setPublicUsersInfos([])
+        setFriendInfos([])
+        setShowCreateGroupForm(false); // Hide the form
+        const response = await getFriendsRequest(user)
+        if (response) {
+            console.log('friends:', response);
+            setFriendInfos(response.content); // Add the liked movies to the state
+        } else {
+            console.error(`Error: ${response}`);
+        }
+    };
+
+    const handleGetPublicUsersClick = async (event: React.MouseEvent) => {
+        event.preventDefault(); // prevent form submit
+        console.log("get public users button clicked!"); // replace with actual implementation
+        setMovieInfos([]); // Clear the current search results
+        setLikedMovies([])
+        setRecommendedMovies([])
+        setGroupInfos([])
+        setPublicUsersInfos([])
+        setFriendInfos([])
+        setShowCreateGroupForm(false); // Hide the form
+        const response = await getPublicUsersRequest(user)
+        if (response) {
+            console.log('public users:', response);
+            setPublicUsersInfos(response.content); // Add the liked movies to the state
+        } else {
+            console.error(`Error: ${response}`);
+        }
+    };
+
     const handleSearchSubmit = async (event: React.ChangeEvent<HTMLFormElement>) => {
         event.preventDefault();
         setGroupInfos([]);
         setLikedMovies([]); // Clear the current liked movies
+        setRecommendedMovies([])
         setShowCreateGroupForm(false); // Hide the form
         const response = await searchMoviesRequest(user, searchQuery)
         if (!response) {
@@ -169,6 +228,7 @@ export default function Dashboard() {
         setGroupInfos([])
         setMovieInfos([])
         setLikedMovies([]); // Clear the current liked movies
+        setRecommendedMovies([])
         setShowCreateGroupForm(false); // Hide the form
         if (typeof event === 'string') {
             console.log("type string")
@@ -293,6 +353,11 @@ if (!loading && user) {
                             </button>
                         </div>
                         <div>
+                            <button onClick={handleRecommendedMoviesClick}>
+                                Recommended Movies
+                            </button>
+                        </div>
+                        <div>
                             <button onClick={handleCreateGroupClick}>
                                 Create Group
                             </button>
@@ -300,6 +365,16 @@ if (!loading && user) {
                         <div>
                             <button onClick={handleGetGroupsClick}>
                                 Groups
+                            </button>
+                        </div>
+                        <div>
+                            <button onClick={handleGetFriendsClick}>
+                                Friends
+                            </button>
+                        </div>
+                        <div>
+                            <button onClick={handleGetPublicUsersClick}>
+                                Public Users
                             </button>
                         </div>
                     </form>
@@ -343,6 +418,11 @@ if (!loading && user) {
                                 <>
                                     <h1 style={{paddingLeft: '2%', textDecoration: 'underline'}}>Groups</h1>
                                     <GroupList groups={groupInfos}/>
+                                </>
+                            ) : recommendedMovies.length >0 ? (
+                                <>
+                                    <h1 style={{paddingLeft: '0.6%', textDecoration: 'underline'}}>Recommended Movies</h1>
+                                    <SearchResultsList movies={recommendedMovies}/>
                                 </>
                             ) : null}
                         </>
