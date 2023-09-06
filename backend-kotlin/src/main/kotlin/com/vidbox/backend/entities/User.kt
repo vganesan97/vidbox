@@ -30,6 +30,8 @@ data class User(
     var firebaseUid: String? = null,
 
     @Column(name = "profile_pic", nullable = true)
-    var profilePic: String? = null
+    var profilePic: String? = null,
 
+    @Column(name = "privacy_level", nullable = true)
+    var privacyLevel: String? = null
 )
