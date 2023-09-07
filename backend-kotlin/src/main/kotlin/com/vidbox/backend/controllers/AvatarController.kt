@@ -7,6 +7,7 @@ import com.vidbox.backend.services.GCSService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import javax.servlet.http.HttpServletRequest
+import kotlin.math.sign
 
 data class GCSSignedURL(val signedUrl: String?)
 

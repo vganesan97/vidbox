@@ -55,6 +55,17 @@ export const signUpUserRequest = async (user: any, signUpFormValues: any) => {
     }
 }
 
+export const signUpUserRequest2 = async (user: any, signUpFormValues: any) => {
+    try {
+        const client = await vidboxApiClient(user);
+        const data = JSON.stringify(signUpFormValues)
+        const response = await client.post('/user/create-user', data)
+        return response.data
+    } catch (error) {
+        console.error("An error occurred:", error)
+    }
+}
+
 export const getProfileAvatarPutSignedUrlRequest = async (user: any) => {
     try {
         const client = await vidboxApiClient(user);
@@ -195,16 +206,35 @@ export const createGroupRequest = async (user: any, groupFormValues: any) => {
     }
 }
 
-export const signInRequest = async (user: any, signInFormValues: any) => {
+export const signInRequest = async (user: any) => {
     try {
         const client = await vidboxApiClient(user);
-        const data = JSON.stringify(signInFormValues)
-        const response = await client.post('/user/login', data)
+        const response = await client.post('/user/login')
         return response.data
     } catch (error) {
         console.error("An error occurred:", error)
     }
 }
+
+export const fetchGoogleUserDOB = async (accessToken: string) => {
+    try {
+        const response = await axios.get('https://people.googleapis.com/v1/people/me?personFields=birthdays', {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+        // The DOB will be in the 'birthdays' field of the response.
+        const birthdays = response.data.birthdays;
+        console.log(response.data)
+        // Extract and return the DOB here (you may need to adjust this part based on the actual API response)
+        // @ts-ignore
+        const dobObject = birthdays.find(b => b.metadata.source.type == 'ACCOUNT').date;
+        return `${dobObject.year}-${String(dobObject.month).padStart(2, '0')}-${String(dobObject.day).padStart(2, '0')}`;
+    } catch (error) {
+        console.error("An error occurred:", error);
+    }
+};
+
 
 
 

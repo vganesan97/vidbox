@@ -14,9 +14,6 @@ data class User(
     @Column(name = "username", nullable = false)
     var username: String? = null,
 
-    @Column(name = "password", nullable = false)
-    var password: String? = null,
-
     @Column(name = "first_name", nullable = false)
     var firstName: String? = null,
 

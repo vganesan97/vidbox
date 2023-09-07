@@ -107,31 +107,31 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
             val pineconeJsonObject = JsonParser.parseString(res).asJsonObject["vectors"].asJsonObject
 
 //            // average the vectors of liked movies
-//            var sumArray: Array<BigDecimal>? = null
-//            var vectorCount = 0
-//            for ((key, value) in pineconeJsonObject.entrySet()) {
-//                val vector = value.asJsonObject["values"].asJsonArray.map { it.asBigDecimal }
-//                println("Vector for key = $key: $vector")
-//                if (sumArray == null) {
-//                    sumArray = Array(vector.size) { BigDecimal.ZERO }
-//                }
-//                for (i in vector.indices) {
-//                    sumArray[i] = sumArray[i].add(vector[i])
-//                }
-//                vectorCount++
-//            }
-//            val avgLikedMoviesVector = sumArray!!.map { it.divide(BigDecimal(vectorCount), MathContext.DECIMAL64) }
-//            println("Average Vector: $avgLikedMoviesVector")
-
+            var sumArray: Array<BigDecimal>? = null
             var vectorCount = 0
-            val summedVectors = pineconeJsonObject.entrySet()
-                .map { (_, value) ->
-                    value.asJsonObject["values"].asJsonArray.map { it.asBigDecimal } }
-                .reduce { acc, vector ->
-                    if (acc.size != vector.size) throw IllegalArgumentException("Vectors must have the same size")
-                    vectorCount++
-                    acc.zip(vector).map { (accValue, vecValue) -> accValue.add(vecValue) } }
-            val avgLikedMoviesVector = summedVectors.map { it.divide(BigDecimal(vectorCount), MathContext.DECIMAL64) }
+            for ((key, value) in pineconeJsonObject.entrySet()) {
+                val vector = value.asJsonObject["values"].asJsonArray.map { it.asBigDecimal }
+                println("Vector for key = $key: $vector")
+                if (sumArray == null) {
+                    sumArray = Array(vector.size) { BigDecimal.ZERO }
+                }
+                for (i in vector.indices) {
+                    sumArray[i] = sumArray[i].add(vector[i])
+                }
+                vectorCount++
+            }
+            val avgLikedMoviesVector = sumArray!!.map { it.divide(BigDecimal(vectorCount), MathContext.DECIMAL64) }
+            println("Average Vector: $avgLikedMoviesVector")
+
+//            var vectorCount = 0
+//            val summedVectors = pineconeJsonObject.entrySet()
+//                .map { (_, value) ->
+//                    value.asJsonObject["values"].asJsonArray.map { it.asBigDecimal } }
+//                .reduce { acc, vector ->
+//                    if (acc.size != vector.size) throw IllegalArgumentException("Vectors must have the same size")
+//                    vectorCount++
+//                    acc.zip(vector).map { (accValue, vecValue) -> accValue.add(vecValue) } }
+//            val avgLikedMoviesVector = summedVectors.map { it.divide(BigDecimal(vectorCount), MathContext.DECIMAL64) }
             println("Average Vector: $avgLikedMoviesVector")
 
             // find the most similar vectors to the averaged liked movies vector
