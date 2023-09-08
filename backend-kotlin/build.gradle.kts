@@ -45,7 +45,7 @@ dependencies {
 }
 
 tasks.register("runCli", JavaExec::class) {
-	mainClass.set("com.vidbox.backend.cli.MainKt") // Replace with the full path to your CLI main class
+	mainClass.set("com.vidbox.backend.cli.MainCliKt") // Replace with the full path to your CLI main class
 	classpath = sourceSets["main"].runtimeClasspath
 	args = project.properties["cliArgs"]?.toString()?.split(",") ?: listOf()
 }

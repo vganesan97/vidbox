@@ -2,7 +2,7 @@ package com.vidbox.backend.cli
 
 import org.apache.commons.cli.*
 
-fun main(args: Array<String>) {
+fun MainCli(args: Array<String>) {
     // Create Options object and define the CLI options
     val options = Options()
     options.addOption("h", "help", false, "print this message")
