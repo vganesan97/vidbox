@@ -13,21 +13,19 @@ import com.google.auth.oauth2.AccessToken
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.secretmanager.v1.*
 import com.google.cloud.storage.*
-import com.vidbox.backend.getAuthorizationUrl
+import com.vidbox.backend.services.GmailService
 import org.jsoup.Jsoup
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.view.RedirectView
 import java.io.*
-import java.time.LocalDateTime
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.zip.CRC32C
 import java.util.zip.Checksum
-import kotlin.reflect.typeOf
 
 @RestController
-class HomeController() {
+class HomeController(private val gmailService: GmailService,
+                     @Value("\${gmail-oauth2-secret}") private val gmailOauth2Secret: String) {
 
     fun toReadableFormat(dateTime: String): String {
         val year = dateTime.substring(0, 4).toInt()
@@ -84,13 +82,13 @@ class HomeController() {
     fun home(@RequestParam(name = "code", required = false) authorizationCode: String?): Any {
         //if (authorizationCode == null) return "<h1 style=\"color: green;\"> The backend service has started 😊 </h1>"
 
-        val CLIENTSECRETS_LOCATION = "backend-kotlin/src/main/kotlin/com/vidbox/backend/oauth2_secret.json"
+        //val CLIENTSECRETS_LOCATION = "backend-kotlin/src/main/kotlin/com/vidbox/backend/oauth2_secret.json"
         val REDIRECT_URI = "http://127.0.0.1:8081"
 
         val jsonFactory = GsonFactory.getDefaultInstance()
-        val clientSecretsFile = File(CLIENTSECRETS_LOCATION)
-        val inputStream = FileInputStream(clientSecretsFile)
-
+//        val clientSecretsFile = File(CLIENTSECRETS_LOCATION)
+//        val inputStream = FileInputStream(clientSecretsFile)
+        val inputStream = ByteArrayInputStream(gmailOauth2Secret.toByteArray())
         val clientSecrets = GoogleClientSecrets.load(
             jsonFactory,
             InputStreamReader(inputStream))
@@ -155,7 +153,7 @@ class HomeController() {
             extractMovieName(decodedMsg)
         }
 
-        return RedirectView("http://localhost:3001/dashboard")
+        return RedirectView("https://google.com")
 
         return listOf(
             movieNames,
@@ -167,7 +165,8 @@ class HomeController() {
 
     @GetMapping("/secret1")
     fun test(): String {
-        return getAuthorizationUrl()
+        return gmailService.getAuthorizationUrl()
+        //return getAuthorizationUrl()
     }
 
     @Throws(IOException::class)
