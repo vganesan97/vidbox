@@ -61,7 +61,7 @@ export default function Home() {
         getRedirectResult(auth)
             .then(async (result) => {
                 // Handle the results here
-                if (result.user) {
+                if (result != null && result.user) {
                     const user = result.user;
                     const credential = GoogleAuthProvider.credentialFromResult(result);
                     const token = credential?.accessToken;
@@ -72,7 +72,7 @@ export default function Home() {
                     // Place your existing logic for new or existing users here
                     // You can also use router.push here as needed
 
-                    if (x.isNewUser) {
+                    if (x != null && x.isNewUser) {
                         let res = await signUpUserRequest(user, {
                             username: user.email,
                             firstName: x.profile ? x.profile.given_name : "no first name",
@@ -158,7 +158,7 @@ export default function Home() {
 
         const auth = getAuth()
         signInWithRedirect(auth, provider)
-            .then(async (result) => {
+            .then(async (result: any) => {
                 // This gives you a Google Access Token. You can use it to access the Google API.
                 const credential = GoogleAuthProvider.credentialFromResult(result);
                 if (credential == null) return
