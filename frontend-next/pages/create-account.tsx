@@ -5,6 +5,14 @@ import {useCreateUserWithEmailAndPassword} from 'react-firebase-hooks/auth';
 import {ErrorMessage, Field, Form, Formik} from 'formik';
 import {auth} from "@/firebase_creds";
 import ErrorModal from '../components/ErrorModal';
+import {
+    fetchGoogleUserDOB,
+    refreshProfileAvatarSignedURLRequest,
+    signInRequest,
+    signUpUserRequest
+} from "@/requests/backendRequests";
+import { getAuth, signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo } from "firebase/auth";
+import "firebase/auth";
 
 
 export default function CreateAccount() {
@@ -54,24 +62,23 @@ export default function CreateAccount() {
     const signUpWithEmailAndPassword = async (values) => {
         try {
             const userCredential = await createUserWithEmailAndPassword(values.username, values.password);
-
             // Handle if user creation is successful
             if (userCredential) {
-                values.idToken = await userCredential.user.getIdToken(true);
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/create-user`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(values),
-                });
-
+                values.idToken = await userCredential.user.getIdToken(true)
+                const res = await signUpUserRequest(userCredential.user, values)
                 setErrorMsg({
                     code: '',
                     msg: ''
                 });
-
+                console.log(res)
                 router.push({
                     pathname: '/dashboard',
-                    query: { username: values.username },
+                    query: {
+                        username: res.username,
+                        firstName: res.firstName,
+                        lastName: res.lastName,
+                        uid: res.uid,
+                    }
                 });
             }
 

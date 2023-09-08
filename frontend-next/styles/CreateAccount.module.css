@@ -45,3 +45,9 @@
     padding: 6rem;
     min-height: 100vh;
 }
+
+.verticalLine {
+    border-left: 2px dotted white; /* Add a left border with 2px width and dotted style */
+    height: 100%; /* Set the height to 100% to make it fill the container */
+    margin-right: 20px; /* Add some right margin to separate the line from the content */
+}

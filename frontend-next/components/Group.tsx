@@ -2,6 +2,7 @@ import { useState} from 'react';
 import {auth} from "@/firebase_creds";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import ImageComponent from "@/components/ImageComponent";
+import {joinGroupRequest} from "@/requests/backendRequests";
 
 type Group = {
     id: number;
@@ -19,53 +20,29 @@ interface GroupProps {
 const Group = ({ group }: GroupProps) =>  {
     const [groupSignedURL, setGroupSignedURL] = useState<string>('');
     const [user, loading, error] = useAuthState(auth)
-    let attempts = 0
-    const handleRefreshGroupAvatarSignedURL = async (groupInfoId: Number) => {
-        console.log("refresh")
-        if (attempts >= 3) {  // only try to refresh the URL up to 3 times
-            console.error('Failed to load image after 3 attempts');
-            attempts = 0
-            return;
-        }
-
-        if (!user) {
-            console.error("User is not authenticated");
-            return;
-        }
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/group/${groupInfoId}/get-signed-url`, {
-            method: 'GET'
-        });
-
-        const res = await response.json()
-        console.log("su", res.signedUrl)
-        setGroupSignedURL(res.signedUrl)
-    }
 
     const joinGroup = async () => {
-        if (!user) {
-            console.error("User is not authenticated");
-            return;
-        }
-        const idToken = await user.getIdToken(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/group/join-group/${group.id}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + idToken,
-                'Content-Type': 'application/json'
-            }
-        });
-        const res = await response.json()
-        console.log("joined group ", res)
+        await joinGroupRequest(user, group.id)
     }
 
     return (
-        <div>
-            <h1>Group Name: {group.groupName}</h1>
-            <h2>Group Description: {group.groupDescription}</h2>
-            <h2>Privacy: {group.privacy}</h2>
-            <h2>Member: {group.isMember ? 'true' : 'false'}</h2>
-            <div style={{display: 'flex', alignItems: 'center'}}>
+        <div style={{
+            width: '300%',
+            marginLeft: '2%',
+            borderBottom: '1px solid #ccc', // Add a 1px solid light grey line
+            paddingBottom: '15px', // Add some padding to space out the line from the content
+            marginBottom: '15px',
+        }}>
+            <div style={{ paddingLeft:'5px', display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
                 <ImageComponent user={{}} src={group.groupAvatar} alt={"Group Avatar"}/>
+                <div style={{ marginLeft: '10px' }}>
+                    <h1>{group.groupName}</h1>
+                </div>
+            </div>
+            <h1>Group Description: {group.groupDescription}</h1>
+            <h1>Privacy: {group.privacy}</h1>
+            <h1>Member: {group.isMember ? 'true' : 'false'}</h1>
+            <div style={{display: 'flex', alignItems: 'center', }}>
                 {/*<img*/}
                 {/*    src={group.groupAvatar}*/}
                 {/*    onError={() => handleRefreshGroupAvatarSignedURL(group.id)}*/}

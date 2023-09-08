@@ -13,12 +13,16 @@ java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
 	mavenCentral()
+	google()
 	maven { url = uri("https://repo.spring.io/milestone") }
 	maven { url = uri("https://repo.spring.io/snapshot") }
 }
 
 dependencies {
 	runtimeOnly("org.postgresql:postgresql")
+	implementation("com.google.apis:google-api-services-gmail:v1-rev20220404-2.0.0")
+	//implementation("com.google.auth:google-auth-library-oauth2-http:1.3.0")
+	implementation("com.google.api-client:google-api-client:1.33.0")
 	implementation(platform("com.google.cloud:libraries-bom:25.1.0"))
 	implementation("com.google.cloud:google-cloud-storage")
 	implementation("com.google.guava:guava:31.1-jre")
@@ -35,7 +39,15 @@ dependencies {
 	implementation("com.squareup.okhttp3:okhttp:4.9.1")
 	implementation("com.google.cloud:spring-cloud-gcp-starter:4.7.1")
 	implementation("com.google.cloud:spring-cloud-gcp-starter-secretmanager:4.7.1")
+	implementation("commons-cli:commons-cli:1.4")
+	implementation("org.jsoup:jsoup:1.14.3")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+}
+
+tasks.register("runCli", JavaExec::class) {
+	mainClass.set("com.vidbox.backend.cli.MainKt") // Replace with the full path to your CLI main class
+	classpath = sourceSets["main"].runtimeClasspath
+	args = project.properties["cliArgs"]?.toString()?.split(",") ?: listOf()
 }
 
 

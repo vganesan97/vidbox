@@ -11,7 +11,9 @@ const ImageLoader = ({ fromMovie }) => {
             foregroundColor="#ecebeb"
             style={{
                 width: fromMovie ? "200px" : "100px",
-                height: fromMovie ? "300px" : "100px"
+                height: fromMovie ? "300px" : "100px",
+                boxShadow: '0 0 0 0 #fff', // Change color to match your background
+                borderRadius: '5%', // Adjust this value for the amount of roundness you want at the corners
             }}
         >
             <rect x="0" y="0" rx="5" ry="5" width="400" height="300" />

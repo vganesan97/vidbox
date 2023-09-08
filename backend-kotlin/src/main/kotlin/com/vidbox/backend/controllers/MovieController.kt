@@ -18,6 +18,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.io.IOException
+import java.math.BigDecimal
+import java.math.MathContext
 import javax.servlet.http.HttpServletRequest
 
 @RestController
@@ -33,19 +35,15 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
     @PostMapping("/like-movie")
     fun likeMovie(@RequestBody like: MovieLikes, request: HttpServletRequest): ResponseEntity<Any> {
         val movieId = like.movieId ?: throw IllegalArgumentException("Movie ID is null")
-
         return try {
             val uid = firebaseService.getUidFromFirebaseToken(request = request)
             val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
-
             val existingLike = movieLikesRepository.findByUserIdAndMovieId(userId, movieId)
-
             if (existingLike == null) {
-                val savedLike = MovieLikes(
+                val movieLike = MovieLikes(
                     userId = userId,
-                    movieId = movieId
-                )
-                val saved = movieLikesRepository.save(savedLike)
+                    movieId = movieId)
+                val savedLike = movieLikesRepository.save(movieLike)
                 println("saved like $savedLike")
                 ResponseEntity.ok(mapOf("liked" to true))
             } else {
@@ -62,7 +60,8 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
     fun likedMovies(request: HttpServletRequest): ResponseEntity<Any> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
-        val likedMovies = movieLikesRepository.findLikedMoviesByUserId(userId)
+        val likedMovies = movieLikesRepository.findLikedMoviesByUserId4(userId)
+        println("reviews for liked movies: ${likedMovies.map { "${it.title} ${it.reviewContent}" }}")
         return ResponseEntity.ok(likedMovies)
     }
 
@@ -73,49 +72,129 @@ class MovieController(private val movieRepository: MovieInfoTopRatedRepository,
                      request: HttpServletRequest): ResponseEntity<Page<MovieInfoTopRatedProjection>> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
-        val pageable = PageRequest.of(page, size)
-        //val resultsPage = movieRepository.findByTitleContains2(query, pageable, userId)
-        val pc = pineconeQuery(query)
-        val rp1 = movieRepository.findByIdsAndUser(userId, pc, pageable)
-        return ResponseEntity.ok(rp1)
+        val pinceoneQueryResult = pineconeSearchQuery(query)
+        val movies = movieRepository.findByIdsAndUser(userId, pinceoneQueryResult, PageRequest.of(page, size))
+        return ResponseEntity.ok(movies)
     }
 
-    fun pineconeQuery(query: String): List<Int> {
+    @GetMapping("/recommendations")
+    fun getRecommendations(request: HttpServletRequest): ResponseEntity<Any> {
+        val uid = firebaseService.getUidFromFirebaseToken(request = request)
+        val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+        val likedMovies = movieLikesRepository.findLikedMoviesByUserId4(userId)
+        val recommendedMovieIds = pineconeRecommendations(likedMovies)
+        val recommendedMovies = movieRepository.findByIdsAndUser(userId, recommendedMovieIds, PageRequest.of(0, 100))
+        println("recommended movies: ${recommendedMovies.content.map { it.title }}")
+        return ResponseEntity.ok(recommendedMovies.content)
+    }
+
+    fun pineconeRecommendations(likedMovies: List<MovieInfoTopRatedProjection>): List<Int> {
+        val likedMovieIds = likedMovies.map { it.id }.toSet() // Collect IDs of liked movies
+        val queryParamIds = likedMovies.map { it.id }.joinToString(separator = "&") { "ids=$it" }
+        println("id string: $queryParamIds")
+
+        // find the vectors corresponding to the ids of the liked movies
+        val pineconeRequest = Request.Builder()
+            .url("$pineconeDbUrl/vectors/fetch?${queryParamIds}")
+            .get()
+            .addHeader("accept", "application/json")
+            .addHeader("Api-Key", pineconeApiKey)
+            .build()
+
+        OkHttpClient().newCall(pineconeRequest).execute().use { pineconeResponse ->
+            if (!pineconeResponse.isSuccessful) throw IOException("Unexpected code $pineconeResponse")
+            val res = pineconeResponse.body?.string() ?: "No response body"
+            val pineconeJsonObject = JsonParser.parseString(res).asJsonObject["vectors"].asJsonObject
+
+//            // average the vectors of liked movies
+            var sumArray: Array<BigDecimal>? = null
+            var vectorCount = 0
+            for ((key, value) in pineconeJsonObject.entrySet()) {
+                val vector = value.asJsonObject["values"].asJsonArray.map { it.asBigDecimal }
+                println("Vector for key = $key: $vector")
+                if (sumArray == null) {
+                    sumArray = Array(vector.size) { BigDecimal.ZERO }
+                }
+                for (i in vector.indices) {
+                    sumArray[i] = sumArray[i].add(vector[i])
+                }
+                vectorCount++
+            }
+            val avgLikedMoviesVector = sumArray!!.map { it.divide(BigDecimal(vectorCount), MathContext.DECIMAL64) }
+            println("Average Vector: $avgLikedMoviesVector")
+
+//            var vectorCount = 0
+//            val summedVectors = pineconeJsonObject.entrySet()
+//                .map { (_, value) ->
+//                    value.asJsonObject["values"].asJsonArray.map { it.asBigDecimal } }
+//                .reduce { acc, vector ->
+//                    if (acc.size != vector.size) throw IllegalArgumentException("Vectors must have the same size")
+//                    vectorCount++
+//                    acc.zip(vector).map { (accValue, vecValue) -> accValue.add(vecValue) } }
+//            val avgLikedMoviesVector = summedVectors.map { it.divide(BigDecimal(vectorCount), MathContext.DECIMAL64) }
+            println("Average Vector: $avgLikedMoviesVector")
+
+            // find the most similar vectors to the averaged liked movies vector
+            val pineconeRequestBodyJson = """{
+                "topK": 100,
+                "vector": $avgLikedMoviesVector
+            }"""
+            val pineconeRequest = Request.Builder()
+                .url("$pineconeDbUrl/query")
+                .post(pineconeRequestBodyJson.toRequestBody("application/json".toMediaTypeOrNull()))
+                .addHeader("accept", "application/json")
+                .addHeader("content-type", "application/json")
+                .addHeader("Api-Key", pineconeApiKey)
+                .build()
+
+            OkHttpClient().newCall(pineconeRequest).execute().use { pineconeResponse ->
+                if (!pineconeResponse.isSuccessful) throw IOException("Unexpected code $pineconeResponse")
+                val res = pineconeResponse.body?.string() ?: "No response body"
+                val pineconeJsonObject = JsonParser.parseString(res).asJsonObject["matches"].asJsonArray
+                val movieIds = pineconeJsonObject.map { it.asJsonObject.get("id").asString.toInt() }
+                return movieIds.filterNot { it in likedMovieIds }
+            }
+        }
+    }
+
+    fun pineconeSearchQuery(query: String): List<Int> {
         val client = OkHttpClient()
         // Specify the model and input text
-        val jsonString = """{
+        val searchQueryJsonString = """{
             "model": "text-embedding-ada-002",
             "input": "$query"
         }"""
-        val requestBody: okhttp3.RequestBody = jsonString.toRequestBody("application/json".toMediaTypeOrNull())
-        val request0 = Request.Builder()
-                .url("https://api.openai.com/v1/embeddings")
-                .post(requestBody)
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Authorization", "Bearer $openaiSecret") // Replace with your actual API key
-                .build()
-        client.newCall(request0).execute().use { response ->
-            if (!response.isSuccessful) throw IOException("Unexpected code $response")
-            val responseBody = response.body?.string() ?: "No response body"
-            val jsonObject = JsonParser.parseString(responseBody).asJsonObject
-            val data = jsonObject["data"].asJsonArray[0].asJsonObject["embedding"].asJsonArray
-            val requestBodyJson = """{
-                    "topK": 10,
-                    "vector": $data
+        val openAIEmbeddingRequestBody: okhttp3.RequestBody = searchQueryJsonString.toRequestBody("application/json".toMediaTypeOrNull())
+        val openAIEmbeddingRequest = Request.Builder()
+            .url("https://api.openai.com/v1/embeddings")
+            .post(openAIEmbeddingRequestBody)
+            .addHeader("Content-Type", "application/json")
+            .addHeader("Authorization", "Bearer $openaiSecret") // Replace with your actual API key
+            .build()
+        client.newCall(openAIEmbeddingRequest).execute().use { embeddingResponse ->
+            if (!embeddingResponse.isSuccessful) throw IOException("Unexpected code $embeddingResponse")
+            val embeddingResponseBody = embeddingResponse.body?.string() ?: "No response body"
+            val embeddingJsonObject = JsonParser.parseString(embeddingResponseBody).asJsonObject
+            val embeddedVector = embeddingJsonObject["data"].asJsonArray[0].asJsonObject["embedding"].asJsonArray
+            val pineconeRequestBodyJson = """{
+                "topK": 10,
+                "vector": $embeddedVector
             }"""
-            val request3 = Request.Builder()
-                    .url("$pineconeDbUrl/query")
-                    .post(requestBodyJson.toRequestBody("application/json".toMediaTypeOrNull()))
-                    .addHeader("accept", "application/json")
-                    .addHeader("content-type", "application/json")
-                    .addHeader("Api-Key", pineconeApiKey)
-                    .build()
-            client.newCall(request3).execute().use { response1 ->
-                if (!response1.isSuccessful) throw IOException("Unexpected code $response1")
-                val res = response1.body?.string() ?: "No response body"
-                val jsonObject1 = JsonParser.parseString(res).asJsonObject["matches"].asJsonArray
-                val ids = jsonObject1.map { it.asJsonObject.get("id").asString.toInt() }
-                return ids
+
+            val pineconeRequest = Request.Builder()
+                .url("$pineconeDbUrl/query")
+                .post(pineconeRequestBodyJson.toRequestBody("application/json".toMediaTypeOrNull()))
+                .addHeader("accept", "application/json")
+                .addHeader("content-type", "application/json")
+                .addHeader("Api-Key", pineconeApiKey)
+                .build()
+
+            client.newCall(pineconeRequest).execute().use { pineconeResponse ->
+                if (!pineconeResponse.isSuccessful) throw IOException("Unexpected code $pineconeResponse")
+                val res = pineconeResponse.body?.string() ?: "No response body"
+                val pineconeJsonObject = JsonParser.parseString(res).asJsonObject["matches"].asJsonArray
+                val movieIds = pineconeJsonObject.map { it.asJsonObject.get("id").asString.toInt() }
+                return movieIds
             }
         }
     }

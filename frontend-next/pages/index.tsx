@@ -5,6 +5,14 @@ import styles from 'styles/CreateAccount.module.css'
 import { useSignInWithEmailAndPassword } from 'react-firebase-hooks/auth';
 import { auth } from "@/firebase_creds";
 import ErrorModal from "@/components/ErrorModal";
+import {
+    fetchGoogleUserDOB,
+    refreshProfileAvatarSignedURLRequest,
+    signInRequest,
+    signUpUserRequest
+} from "@/requests/backendRequests";
+import { getAuth, signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo } from "firebase/auth";
+
 
 interface SignInFormValues {
     username: string;
@@ -51,29 +59,8 @@ export default function Home() {
         try {
             const userCredential = await signInWithEmailAndPassword(values.username, values.password);
             if (userCredential == null) return
-            const idToken = await userCredential.user.getIdToken(true);
-            console.log("base url", process.env.NEXT_PUBLIC_API_BASE_URL)
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/user/login`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + idToken,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(values),
-            });
-
-            const res = await response.json()
-
-            const response1 = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/avatar/user/get-signed-url`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + idToken
-                }
-            });
-
-            const res1 = await response1.json()
-            console.log("firstName: ", values.firstName)
-
+            const res = await signInRequest(userCredential.user)
+            const res1 = await refreshProfileAvatarSignedURLRequest(userCredential.user)
             router.push({
                 pathname: '/dashboard',
                 query: {
@@ -84,12 +71,10 @@ export default function Home() {
                     signedURL: res1.signedUrl
                 }
             })
-
             setErrorMsg({
                 code: '',
                 msg: ''
             });
-
         } catch (error) {
             console.error('An error occurred:', error);
         }
@@ -102,9 +87,80 @@ export default function Home() {
         }
     };
 
+
     const route = () => {
         setRoutingToSignUp(true);  // Add this line
         router.push('/create-account');
+    }
+
+    const handleGoogleSignIn = async () => {
+        const provider = new GoogleAuthProvider()
+        provider.addScope('https://www.googleapis.com/auth/user.birthday.read')
+        provider.addScope('https://www.googleapis.com/auth/userinfo.profile')
+
+        const auth = getAuth()
+        signInWithPopup(auth, provider)
+            .then(async (result) => {
+                // This gives you a Google Access Token. You can use it to access the Google API.
+                const credential = GoogleAuthProvider.credentialFromResult(result);
+                if (credential == null) return
+
+                const token = credential.accessToken;
+                const user = result.user
+
+                const dob = await fetchGoogleUserDOB(token as string);
+                const x = getAdditionalUserInfo(result)
+
+                if (x == null) {
+                    console.log("not able to find additional user info")
+                    return
+                }
+
+                console.log(dob)
+                console.log(x)
+
+                if (x.isNewUser) {
+                    let res = await signUpUserRequest(user, {
+                        username: user.email,
+                        firstName: x.profile ? x.profile.given_name : "no first name",
+                        lastName: x.profile ? x.profile.family_name : "no first name",
+                        dob: dob,
+                        idToken: await user.getIdToken(true)
+                    })
+                    router.push({
+                        pathname: '/dashboard',
+                        query: {
+                            username: res.username,
+                            firstName: res.firstName,
+                            lastName: res.lastName,
+                            uid: res.uid
+                        },
+                    });
+                } else {
+                    const res = await signInRequest(user)
+                    const res1 = await refreshProfileAvatarSignedURLRequest(user)
+                    router.push({
+                        pathname: '/dashboard',
+                        query: {
+                            username: res.username,
+                            firstName: res.firstName,
+                            lastName: res.lastName,
+                            uid: res.uid,
+                            signedURL: res1.signedUrl
+                        }
+                    })
+                }
+            }).catch((error) => {
+            // Handle Errors here.
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            // The email of the user's account used.
+            const email = error.customData.email;
+            // The AuthCredential type that was used.
+            const credential = GoogleAuthProvider.credentialFromError(error);
+            // ...
+        });
+
     }
 
   return (
@@ -151,6 +207,10 @@ export default function Home() {
                           Sign Up
                       </button>
                   </div>
+
+                  <button onClick={handleGoogleSignIn}>
+                      Google Sign In
+                  </button>
 
                   <div style={{width: '100%'}}>
                       {errorModalOpen && !routingToSignUp && <ErrorModal error={errorMsg}/>}

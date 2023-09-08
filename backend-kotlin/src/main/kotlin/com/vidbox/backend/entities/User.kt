@@ -14,9 +14,6 @@ data class User(
     @Column(name = "username", nullable = false)
     var username: String? = null,
 
-    @Column(name = "password", nullable = false)
-    var password: String? = null,
-
     @Column(name = "first_name", nullable = false)
     var firstName: String? = null,
 
@@ -30,6 +27,8 @@ data class User(
     var firebaseUid: String? = null,
 
     @Column(name = "profile_pic", nullable = true)
-    var profilePic: String? = null
+    var profilePic: String? = null,
 
+    @Column(name = "privacy_level", nullable = true)
+    var privacyLevel: String? = null
 )

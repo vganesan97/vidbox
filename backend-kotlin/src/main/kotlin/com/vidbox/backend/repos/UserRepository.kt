@@ -7,4 +7,6 @@ interface UserRepository : JpaRepository<User, Int> {
 
     fun findByFirebaseUid(firebaseUid: String): User
 
+    fun findByPrivacyLevel(privacyLevel: String): List<User>
+
 }

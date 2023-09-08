@@ -104,7 +104,6 @@ class GroupController(private val groupInfoRepository: GroupInfoRepository,
     fun joinGroup(@PathVariable groupId: Int, request: HttpServletRequest): ResponseEntity<Any> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
-        var gm: GroupMembers
         try {
             println("group id: $groupId, user id: $userId")
             val groupMember = GroupMembers(
