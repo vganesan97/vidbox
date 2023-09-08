@@ -11,7 +11,7 @@ import {
     signInRequest,
     signUpUserRequest
 } from "@/requests/backendRequests";
-import { getAuth, signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo, signInWithRedirect, getRedirectResult } from "firebase/auth";
 
 
 interface SignInFormValues {
@@ -54,6 +54,64 @@ export default function Home() {
         // @ts-ignore
         return () => clearTimeout(errorTimeout);  // Clean up on unmount
     }, [error]);
+
+    useEffect(() => {
+        // Check for redirect result after mounting the component
+        const auth = getAuth();
+        getRedirectResult(auth)
+            .then(async (result) => {
+                // Handle the results here
+                if (result.user) {
+                    const user = result.user;
+                    const credential = GoogleAuthProvider.credentialFromResult(result);
+                    const token = credential?.accessToken;
+                    const x = getAdditionalUserInfo(result)
+                    const dob = await fetchGoogleUserDOB(token as string);
+                    console.log(x, user, credential, token)
+
+                    // Place your existing logic for new or existing users here
+                    // You can also use router.push here as needed
+
+                    if (x.isNewUser) {
+                        let res = await signUpUserRequest(user, {
+                            username: user.email,
+                            firstName: x.profile ? x.profile.given_name : "no first name",
+                            lastName: x.profile ? x.profile.family_name : "no first name",
+                            dob: dob,
+                            idToken: await user.getIdToken(true)
+                        })
+                        router.push({
+                            pathname: '/dashboard',
+                            query: {
+                                username: res.username,
+                                firstName: res.firstName,
+                                lastName: res.lastName,
+                                uid: res.uid
+                            },
+                        });
+                    } else {
+                        const res = await signInRequest(user)
+                        const res1 = await refreshProfileAvatarSignedURLRequest(user)
+                        router.push({
+                            pathname: '/dashboard',
+                            query: {
+                                username: res.username,
+                                firstName: res.firstName,
+                                lastName: res.lastName,
+                                uid: res.uid,
+                                signedURL: res1.signedUrl
+                            }
+                        })
+                    }
+                }
+            })
+            .catch((error) => {
+                // Handle errors here
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                console.log(`Error code: ${errorCode}, Error message: ${errorMessage}`);
+            });
+    }, []);
 
     const signIn = async (values: SignInFormValues) => {
         try {
@@ -99,7 +157,7 @@ export default function Home() {
         provider.addScope('https://www.googleapis.com/auth/userinfo.profile')
 
         const auth = getAuth()
-        signInWithPopup(auth, provider)
+        signInWithRedirect(auth, provider)
             .then(async (result) => {
                 // This gives you a Google Access Token. You can use it to access the Google API.
                 const credential = GoogleAuthProvider.credentialFromResult(result);
@@ -107,6 +165,7 @@ export default function Home() {
 
                 const token = credential.accessToken;
                 const user = result.user
+                console.log(user)
 
                 const dob = await fetchGoogleUserDOB(token as string);
                 const x = getAdditionalUserInfo(result)
