@@ -34,7 +34,7 @@ class UserController(private val userRepository: UserRepository,
             }
 
             val user = userRepository.findByFirebaseUid(uid)
-            logger.info("user ${user.username} ${user.firstName}")
+            logger.warn("user ${user.username} ${user.firstName}")
 
             ResponseEntity.ok(
                 LoginResponse(
@@ -75,7 +75,7 @@ class UserController(private val userRepository: UserRepository,
             firebaseUid = uid
         )
         userRepository.save(user)
-        logger.info("uid $uid")
+        logger.warn("uid $uid")
         return uid
     }
 
