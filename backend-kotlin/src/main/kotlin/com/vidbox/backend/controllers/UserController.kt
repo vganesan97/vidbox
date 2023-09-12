@@ -23,6 +23,7 @@ class UserController(private val userRepository: UserRepository,
 
     @PostMapping("/login")
     fun login(request: HttpServletRequest, @RequestBody(required = false) newUserCreds: NewUserCreds? = null): ResponseEntity<LoginResponse> {
+        logger.warn("this is the login endpoint")
         return try {
             val uid: String = try {
                 firebaseService.getUidFromFirebaseToken(request = request)

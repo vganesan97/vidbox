@@ -198,6 +198,7 @@ export default function Home() {
                         },
                     });
                 } else {
+                    console.log("dihn in 2")
                     const res = await signInRequest2(user, {
                         username: user.email,
                         firstName: x.profile ? x.profile.given_name : "no first name",
