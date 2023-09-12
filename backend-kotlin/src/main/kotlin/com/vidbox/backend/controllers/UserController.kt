@@ -29,6 +29,7 @@ class UserController(private val userRepository: UserRepository,
             }
 
             val user = userRepository.findByFirebaseUid(uid)
+            println("user ${user.username} ${user.firstName}")
 
             ResponseEntity.ok(
                 LoginResponse(
@@ -69,6 +70,7 @@ class UserController(private val userRepository: UserRepository,
             firebaseUid = uid
         )
         userRepository.save(user)
+        println("uid $uid")
         return uid
     }
 
