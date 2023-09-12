@@ -48,7 +48,9 @@ export const signUpUserRequest = async (user: any, signUpFormValues: any) => {
     try {
         const client = await vidboxApiClient(user);
         const data = JSON.stringify(signUpFormValues)
+        console.log(data)
         const response = await client.post('/user/create-user', data)
+
         return response.data
     } catch (error) {
         console.error("An error occurred:", error)
@@ -210,6 +212,17 @@ export const signInRequest = async (user: any) => {
     try {
         const client = await vidboxApiClient(user);
         const response = await client.post('/user/login')
+        return response.data
+    } catch (error) {
+        console.error("An error occurred:", error)
+    }
+}
+
+export const signInRequest2 = async (user: any, signUpFormValues: any) => {
+    try {
+        const client = await vidboxApiClient(user);
+        const data = JSON.stringify(signUpFormValues)
+        const response = await client.post('/user/login', data)
         return response.data
     } catch (error) {
         console.error("An error occurred:", error)

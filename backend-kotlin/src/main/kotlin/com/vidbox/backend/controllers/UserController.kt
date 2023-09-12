@@ -18,34 +18,64 @@ class UserController(private val userRepository: UserRepository,
                      private val firebaseService: FirebaseService) {
 
     @PostMapping("/login")
-    fun login(request: HttpServletRequest): ResponseEntity<LoginResponse> {
-        try {
-            val uid = firebaseService.getUidFromFirebaseToken(request = request)
+    fun login(request: HttpServletRequest, @RequestBody(required = false) newUserCreds: NewUserCreds? = null): ResponseEntity<LoginResponse> {
+        return try {
+            val uid: String = try {
+                firebaseService.getUidFromFirebaseToken(request = request)
+            } catch (e: Exception) {
+                newUserCreds?.let {
+                    createUser2(it)
+                } ?: throw Exception("Unable to create user.")
+            }
+
             val user = userRepository.findByFirebaseUid(uid)
-            println(user.firstName)
-            return ResponseEntity.ok(LoginResponse(
-                    message = "Successfully logged in. " +
-                            "User exists and their name is ${user.firstName} ${user.lastName}",
+
+            ResponseEntity.ok(
+                LoginResponse(
+                    message = "Successfully logged in. User exists and their name is ${user.firstName} ${user.lastName}",
                     username = user.username.toString(),
                     firstName = user.firstName.toString(),
                     lastName = user.lastName.toString(),
                     uid = user.firebaseUid!!,
-                    profilePic = if (user.profilePic != null) user.profilePic!! else ""
-            ))
+                    profilePic = user.profilePic ?: ""
+                )
+            )
         } catch (e: Exception) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(LoginResponse(
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                LoginResponse(
                     message = "An error occurred: ${e.message}",
                     username = "unknown",
                     firstName = "unknown",
                     lastName = "unknown",
                     uid = "null",
                     profilePic = "null"
-            ))
+                )
+            )
         }
     }
 
+    private fun createUser2(newUserCreds: NewUserCreds): String {
+        val username = newUserCreds.username
+        val firstName = newUserCreds.firstName
+        val lastName = newUserCreds.lastName
+        val dob = LocalDate.parse(newUserCreds.dob)
+        val uid = firebaseService.getUidFromFirebaseToken(idToken = newUserCreds.idToken)
+
+        val user = User(
+            username = username,
+            firstName = firstName,
+            lastName = lastName,
+            dob = dob,
+            firebaseUid = uid
+        )
+        userRepository.save(user)
+        return uid
+    }
+
+
     @PostMapping("/create-user")
     fun createUser(@RequestBody userCreds: NewUserCreds): ResponseEntity<LoginResponse> {
+        println("hi")
         println("user creds: $userCreds")
         val username = userCreds.username
         val firstName = userCreds.firstName

@@ -8,7 +8,7 @@ import ErrorModal from "@/components/ErrorModal";
 import {
     fetchGoogleUserDOB,
     refreshProfileAvatarSignedURLRequest,
-    signInRequest,
+    signInRequest, signInRequest2,
     signUpUserRequest
 } from "@/requests/backendRequests";
 import { getAuth, signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo, signInWithRedirect, getRedirectResult } from "firebase/auth";
@@ -80,6 +80,7 @@ export default function Home() {
                             dob: dob,
                             idToken: await user.getIdToken(true)
                         })
+                        console.log("user2", res)
                         router.push({
                             pathname: '/dashboard',
                             query: {
@@ -89,7 +90,8 @@ export default function Home() {
                                 uid: res.uid
                             },
                         });
-                    } else {
+                    }
+                    if (x != null && !x.isNewUser) {
                         const res = await signInRequest(user)
                         const res1 = await refreshProfileAvatarSignedURLRequest(user)
                         router.push({
@@ -196,7 +198,13 @@ export default function Home() {
                         },
                     });
                 } else {
-                    const res = await signInRequest(user)
+                    const res = await signInRequest2(user, {
+                        username: user.email,
+                        firstName: x.profile ? x.profile.given_name : "no first name",
+                        lastName: x.profile ? x.profile.family_name : "no first name",
+                        dob: dob,
+                        idToken: await user.getIdToken(true)
+                    })
                     const res1 = await refreshProfileAvatarSignedURLRequest(user)
                     router.push({
                         pathname: '/dashboard',
@@ -262,14 +270,16 @@ export default function Home() {
                   </div>
 
                   <div className={styles.signupWrapper}>
+                      <button onClick={handleGoogleSignIn}>
+                          Google Sign In
+                      </button>
+                  </div>
+
+                  <div className={styles.signupWrapper}>
                       <button type="button" onClick={route}>
                           Sign Up
                       </button>
                   </div>
-
-                  <button onClick={handleGoogleSignIn}>
-                      Google Sign In
-                  </button>
 
                   <div style={{width: '100%'}}>
                       {errorModalOpen && !routingToSignUp && <ErrorModal error={errorMsg}/>}
