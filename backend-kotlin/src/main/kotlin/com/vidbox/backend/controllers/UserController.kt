@@ -6,6 +6,7 @@ import com.vidbox.backend.models.LoginResponse
 import com.vidbox.backend.models.NewUserCreds
 import com.vidbox.backend.repos.UserRepository
 import com.vidbox.backend.services.FirebaseService
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -16,6 +17,9 @@ import javax.servlet.http.HttpServletRequest
 @RequestMapping("/user")
 class UserController(private val userRepository: UserRepository,
                      private val firebaseService: FirebaseService) {
+
+    private val logger = LoggerFactory.getLogger(UserController::class.java)
+
 
     @PostMapping("/login")
     fun login(request: HttpServletRequest, @RequestBody(required = false) newUserCreds: NewUserCreds? = null): ResponseEntity<LoginResponse> {
@@ -29,7 +33,7 @@ class UserController(private val userRepository: UserRepository,
             }
 
             val user = userRepository.findByFirebaseUid(uid)
-            println("user ${user.username} ${user.firstName}")
+            logger.info("user ${user.username} ${user.firstName}")
 
             ResponseEntity.ok(
                 LoginResponse(
@@ -70,7 +74,7 @@ class UserController(private val userRepository: UserRepository,
             firebaseUid = uid
         )
         userRepository.save(user)
-        println("uid $uid")
+        logger.info("uid $uid")
         return uid
     }
 
