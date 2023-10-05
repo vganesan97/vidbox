@@ -78,8 +78,8 @@ class HomeController(private val gmailService: GmailService,
         return "$movieName $movieDate"
     }
 
-    @GetMapping("/")
-    fun home(@RequestParam(name = "code", required = false) authorizationCode: String?): Any {
+    @GetMapping("/x")
+    fun home2(@RequestParam(name = "code", required = false) authorizationCode: String?): Any {
         //if (authorizationCode == null) return "<h1 style=\"color: green;\"> The backend service has started 😊 </h1>"
 
         //val CLIENTSECRETS_LOCATION = "backend-kotlin/src/main/kotlin/com/vidbox/backend/oauth2_secret.json"
@@ -166,6 +166,12 @@ class HomeController(private val gmailService: GmailService,
     @GetMapping("/secret1")
     fun test(): String {
         return gmailService.getAuthorizationUrl()
+        //return getAuthorizationUrl()
+    }
+
+    @GetMapping("/")
+    fun home(): String {
+        return "hi"
         //return getAuthorizationUrl()
     }
 
