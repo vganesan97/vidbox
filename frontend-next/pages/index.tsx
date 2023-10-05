@@ -1,7 +1,5 @@
 import { Formik, Field, Form, ErrorMessage } from 'formik';
 import { useRouter } from 'next/router';
-import { useUser } from "@clerk/nextjs";
-
 import React, { useState, useEffect } from 'react';
 import styles from 'styles/CreateAccount.module.css'
 import { useSignInWithEmailAndPassword } from 'react-firebase-hooks/auth';
