@@ -293,18 +293,26 @@ export default function Dashboard() {
         await handleSearchGroupsSubmit(resj.groupName);
     }
 
+    const shouldRenderRightComponents = () => {
+        return showCreateGroupForm ||
+            likedMovies.length > 0 ||
+            movieInfos.length > 0 ||
+            groupInfos.length > 0 ||
+            recommendedMovies.length > 0;
+    }
+
 if (!loading && user) {
         // @ts-ignore
     // @ts-ignore
     // @ts-ignore
     return (
             <div style={{display: 'flex'}}>
-                <div style={{
-                    borderRight: '3px solid white', /* Add a left border with 2px width and dotted style */
-                    paddingRight: '8px', /* Add 10px of left margin to move the line to the left */
-                    marginRight: '',
+                <div style={shouldRenderRightComponents() ? {
+                    borderRight: '3px solid white',
+                    paddingRight: '8px',
                     paddingLeft: '5px',
-                }}>
+                } : {}}
+                >
                     <h1 style={{ paddingLeft: '5px'}}>{user.email}</h1>
                     <div style={{ paddingLeft:'5px', display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
                         {signedURL.length > 0 ? (

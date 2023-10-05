@@ -1,9 +1,10 @@
 package com.vidbox.backend.controllers
 
+import com.vidbox.backend.models.FriendRequest
+import com.vidbox.backend.entities.FriendRequest as FriendRequestEntity
 import com.vidbox.backend.entities.User
-import com.vidbox.backend.models.LoginCreds
-import com.vidbox.backend.models.LoginResponse
-import com.vidbox.backend.models.NewUserCreds
+import com.vidbox.backend.models.*
+import com.vidbox.backend.repos.FriendRequestRepository
 import com.vidbox.backend.repos.UserRepository
 import com.vidbox.backend.services.FirebaseService
 import org.slf4j.LoggerFactory
@@ -16,6 +17,7 @@ import javax.servlet.http.HttpServletRequest
 @RestController
 @RequestMapping("/user")
 class UserController(private val userRepository: UserRepository,
+                     private val friendRequestRepository: FriendRequestRepository,
                      private val firebaseService: FirebaseService) {
 
     private val logger = LoggerFactory.getLogger(UserController::class.java)
@@ -66,7 +68,6 @@ class UserController(private val userRepository: UserRepository,
         val lastName = newUserCreds.lastName
         val dob = LocalDate.parse(newUserCreds.dob)
         val uid = firebaseService.getUidFromFirebaseToken(idToken = newUserCreds.idToken)
-
         val user = User(
             username = username,
             firstName = firstName,
@@ -114,29 +115,55 @@ class UserController(private val userRepository: UserRepository,
         return ResponseEntity.ok(users)
     }
 
-    @PostMapping("/friends")
-    fun getFriends(@RequestBody userCreds: NewUserCreds): ResponseEntity<LoginResponse> {
-        val username = userCreds.username
-        val firstName = userCreds.firstName
-        val lastName = userCreds.lastName
-        val dob = LocalDate.parse(userCreds.dob)
-        val uid = firebaseService.getUidFromFirebaseToken(idToken = userCreds.idToken)
+//    @PostMapping("/friends")
+//    fun getFriends(request: HttpServletRequest): ResponseEntity<Any> {
+//        val uid = firebaseService.getUidFromFirebaseToken(request = request)
+//        val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+//            ..val friends= userRepository.
+//
+//    }
 
-        val user = User(
-            username = username,
-            firstName = firstName,
-            lastName = lastName,
-            dob = dob,
-            firebaseUid = uid)
-        userRepository.save(user)
-
-        return ResponseEntity.ok(LoginResponse(
-            message = "Successfully created user",
-            username = userCreds.username,
-            firstName = "unknown",
-            lastName = "unknown",
-            uid = user.firebaseUid!!,
-            profilePic = if (user.profilePic != null) user.profilePic!! else ""
-        ))
+    @PostMapping("/send-friend-request")
+    fun sendFriendRequest(request: HttpServletRequest, @RequestBody friendRequest: FriendRequest): ResponseEntity<FriendRequestEntity> {
+        val uid = firebaseService.getUidFromFirebaseToken(request = request)
+        val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+        if (userId != friendRequest.requester) return ResponseEntity(HttpStatus.UNAUTHORIZED)
+        val friendRequestEntity = FriendRequestEntity(requester = friendRequest.requester, requested = friendRequest.requested)
+        friendRequestRepository.save(friendRequestEntity)
+        return ResponseEntity.ok(friendRequestEntity)
     }
+
+    @GetMapping("/get-friend-requests")
+    fun getFriendRequests(request: HttpServletRequest): ResponseEntity<List<FriendRequestEntity>> {
+        val uid = firebaseService.getUidFromFirebaseToken(request = request)
+        val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+        val friendRequests = friendRequestRepository.findByStatusAndRequested("PENDING", userId)
+        return ResponseEntity.ok(friendRequests)
+
+
+        // Get friends
+        //        val friends = userRepository.findById(userId)?.friends?.map { it.id } ?: emptyList()
+        //        return ResponseEntity.ok(friends)
+
+    }
+
+//    @PostMapping("/accept-friend-request")
+//    fun acceptFriendRequest(request: HttpServletRequest, @RequestBody friendRequest: FriendRequest): ResponseEntity<FriendRequest> {
+//        val uid = firebaseService.getUidFromFirebaseToken(request = request)
+//        val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+//        // accept friend request
+//        val friendRequestEntity = friendRequestRepository.findById(friendRequest.id) ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+//        // check if request is for current user
+//        if(friendRequestEntity.requested != userId) return ResponseEntity(HttpStatus.UNAUTHORIZED)
+//        // update status to accepted
+//        friendRequestEntity.status = "ACCEPTED"
+//        // add friends to each other
+//        val requesterUser = userRepository.findById(friendRequestEntity.requester) ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+//        val requestedUser = userRepository.findById(friendRequestEntity.requested) ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+//        // add friends to each other
+//        requesterUser.friends.add(requestedUser)
+//
+//
+//
+//    }
 }

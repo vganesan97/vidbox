@@ -216,6 +216,7 @@ const Movie = ({ movie }: MovieProps) => {
                     background: 'linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0.3))',
                     color: '#fff',
                     padding: '10px',
+                    borderRadius: '10px'
                 }}>
                     <b style={{fontSize: '150%'}}>{movie.overview}</b>
                 </div>

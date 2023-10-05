@@ -4,7 +4,7 @@ import axios from 'axios';
 const vidboxApiClient = async (user: any) => {
     if (!user) throw new Error('User must be provided');
     const idToken = await user.getIdToken(true);
-    const apiClient = axios.create({
+    return axios.create({
         baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
         headers: {
             'Authorization': 'Bearer ' + idToken,
@@ -12,7 +12,6 @@ const vidboxApiClient = async (user: any) => {
         }
         // Additional configuration here
     });
-    return apiClient;
 };
 
 export default vidboxApiClient;

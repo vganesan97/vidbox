@@ -1,6 +1,8 @@
 import { Formik, Field, Form, ErrorMessage } from 'formik';
 import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
+import { useUser } from "@clerk/nextjs";
+
+import React, { useState, useEffect } from 'react';
 import styles from 'styles/CreateAccount.module.css'
 import { useSignInWithEmailAndPassword } from 'react-firebase-hooks/auth';
 import { auth } from "@/firebase_creds";
@@ -12,6 +14,7 @@ import {
     signUpUserRequest
 } from "@/requests/backendRequests";
 import { getAuth, signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo, signInWithRedirect, getRedirectResult } from "firebase/auth";
+
 
 
 interface SignInFormValues {
@@ -35,6 +38,9 @@ export default function Home() {
 
     useEffect(() => {
         // @ts-ignore
+
+       //f if (user2) router.push('/dashboard')
+
         let errorTimeout;
         if (error) {
             setErrorModalOpen(true);
@@ -231,6 +237,7 @@ export default function Home() {
 
     }
 
+
   return (
       <main className={styles.main}>
           <div className={styles.title}>Sign In</div>
@@ -271,16 +278,11 @@ export default function Home() {
                   </div>
 
                   <div className={styles.signupWrapper}>
-                      <button onClick={handleGoogleSignIn}>
-                          Google Sign In
-                      </button>
-                  </div>
-
-                  <div className={styles.signupWrapper}>
                       <button type="button" onClick={route}>
                           Sign Up
                       </button>
                   </div>
+
 
                   <div style={{width: '100%'}}>
                       {errorModalOpen && !routingToSignUp && <ErrorModal error={errorMsg}/>}
@@ -288,6 +290,14 @@ export default function Home() {
               </Form>
             )}
         </Formik>
+
+          <div className={styles.signupWrapper}>
+              <button onClick={handleGoogleSignIn}>
+                  Google Sign In
+              </button>
+          </div>
       </main>
+
+
   );
 }
