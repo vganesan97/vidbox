@@ -38,7 +38,7 @@ export const createReviewRequest = async (user: any, reviewFormValues: any) => {
     try {
         const client = await vidboxApiClient(user);
         const data = JSON.stringify(reviewFormValues)
-        const response = await client.post('/review/create', data)
+        await client.post('/review/create', data)
     } catch (error) {
         console.error("An error occurred:", error)
     }
