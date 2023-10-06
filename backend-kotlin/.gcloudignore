@@ -18,3 +18,5 @@ target/
 
 # Ignore python-db-scripts directory
 python-db-scripts/
+
+cors.json
