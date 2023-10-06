@@ -18,6 +18,6 @@ data class FriendRequest(
     var requested: Int? = null,
 
     @Column(name = "status", nullable = false)
-    var status: Int? = null,
+    var status: String? = null,
 
 )
