@@ -25,9 +25,11 @@ class FriendController(private val userRepository: UserRepository,
     fun sendFriendRequest(request: HttpServletRequest, @RequestBody friendRequest: FriendRequest): ResponseEntity<FriendRequestEntity> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+
         if (userId != friendRequest.requesterId) return ResponseEntity(HttpStatus.UNAUTHORIZED)
         val friendRequestEntity = FriendRequestEntity(requester = friendRequest.requesterId, requested = friendRequest.requestedId)
         friendRequestRepository.save(friendRequestEntity)
+
         return ResponseEntity.ok(friendRequestEntity)
     }
 
@@ -43,10 +45,12 @@ class FriendController(private val userRepository: UserRepository,
     fun acceptFriendRequest(request: HttpServletRequest, @RequestBody friendRequest: FriendRequest): ResponseEntity<Friend> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+
         if (friendRequest.requestedId != userId) return ResponseEntity(HttpStatus.UNAUTHORIZED)
         val friendRequestEntity = friendRequestRepository.findById(friendRequest.id).get()
         friendRequestEntity.status = "ACCEPTED"
         friendRequestRepository.save(friendRequestEntity)
+
         val friendEntity = Friend(friendAId = friendRequestEntity.requester, friendBId = friendRequestEntity.requested)
         friendRepository.save(friendEntity)
         return ResponseEntity.ok(friendEntity)

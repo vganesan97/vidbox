@@ -175,6 +175,11 @@ class HomeController(private val gmailService: GmailService,
         //return getAuthorizationUrl()
     }
 
+    @GetMapping("/_ah/warmup")
+    fun warmup(): String {
+        return "warmup endpoint"
+    }
+
     @Throws(IOException::class)
     fun accessSecretVersion(): String {
         // TODO(developer): Replace these variables before running the sample.
