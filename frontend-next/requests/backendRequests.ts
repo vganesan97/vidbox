@@ -148,7 +148,7 @@ export const getGroupsRequest = async (user: any) => {
 export const getPublicUsersRequest = async (user: any) => {
     try {
         const client = await vidboxApiClient(user);
-        const response = await client.get('/user/public-users')
+        const response = await client.get('/user/get-public-users')
         console.log(response.data)
         return response.data
     } catch (error) {
@@ -159,7 +159,7 @@ export const getPublicUsersRequest = async (user: any) => {
 export const getFriendsRequest = async (user: any) => {
     try {
         const client = await vidboxApiClient(user);
-        const response = await client.get('/user/friends')
+        const response = await client.get('/friends/get-friends')
         console.log(response.data)
         return response.data
     } catch (error) {
