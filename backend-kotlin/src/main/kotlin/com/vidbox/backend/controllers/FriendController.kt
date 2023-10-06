@@ -9,7 +9,6 @@ import com.vidbox.backend.repos.FriendRepository
 import com.vidbox.backend.repos.FriendRequestRepository
 import com.vidbox.backend.repos.UserRepository
 import com.vidbox.backend.services.FirebaseService
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
