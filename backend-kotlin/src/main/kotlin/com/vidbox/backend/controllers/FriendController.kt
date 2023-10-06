@@ -22,7 +22,6 @@ class FriendController(private val userRepository: UserRepository,
                        private val friendRepository: FriendRepository,
                        private val firebaseService: FirebaseService) {
 
-    private val logger = LoggerFactory.getLogger(FriendController::class.java)
     @PostMapping("/send-friend-request")
     fun sendFriendRequest(request: HttpServletRequest, @RequestBody friendRequest: FriendRequest): ResponseEntity<FriendRequestEntity> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
