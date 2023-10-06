@@ -1,5 +1,8 @@
 runtime: java17 # or another supported version
 
+env_variables:
+  SPRING_PROFILES_ACTIVE: 'prod'
+
 handlers:
   - url: /stylesheets
     static_dir: stylesheets
