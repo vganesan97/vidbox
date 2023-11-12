@@ -9,6 +9,7 @@ import com.vidbox.backend.repos.FriendRepository
 import com.vidbox.backend.repos.FriendRequestRepository
 import com.vidbox.backend.repos.UserRepository
 import com.vidbox.backend.services.FirebaseService
+import com.vidbox.backend.services.GCSService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -19,48 +20,69 @@ import javax.servlet.http.HttpServletRequest
 class FriendController(private val userRepository: UserRepository,
                        private val friendRequestRepository: FriendRequestRepository,
                        private val friendRepository: FriendRepository,
-                       private val firebaseService: FirebaseService) {
+                       private val firebaseService: FirebaseService,
+                       private val gcsService: GCSService
+) {
 
-    @PostMapping("/send-friend-request")
-    fun sendFriendRequest(request: HttpServletRequest, @RequestBody friendRequest: FriendRequest): ResponseEntity<FriendRequestEntity> {
+    @PostMapping("/send-friend-request/{friendId}")
+    fun sendFriendRequest(request: HttpServletRequest, @PathVariable friendId: Int): ResponseEntity<FriendRequestEntity> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
-
-        if (userId != friendRequest.requesterId) return ResponseEntity(HttpStatus.UNAUTHORIZED)
-        val friendRequestEntity = FriendRequestEntity(requester = friendRequest.requesterId, requested = friendRequest.requestedId)
+        val friendRequestEntity = FriendRequestEntity(
+            requester = userId,
+            requested = friendId)
         friendRequestRepository.save(friendRequestEntity)
-
         return ResponseEntity.ok(friendRequestEntity)
     }
 
     @GetMapping("/get-friend-requests")
-    fun getFriendRequests(request: HttpServletRequest): ResponseEntity<List<FriendRequestEntity>> {
+    fun getFriendRequests(request: HttpServletRequest): ResponseEntity<List<User>> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
-        val friendRequests = friendRequestRepository.findByStatusAndRequested("PENDING", userId)
+        val friendRequests = friendRequestRepository.findUsersByFriendReqStatusAndRequested("PENDING", userId)
+        friendRequests.map { it.profilePic = gcsService.refreshProfileAvatarSignedURL(it) }
         return ResponseEntity.ok(friendRequests)
     }
 
-    @PostMapping("/accept-friend-request")
-    fun acceptFriendRequest(request: HttpServletRequest, @RequestBody friendRequest: FriendRequest): ResponseEntity<Friend> {
+    @PostMapping("/accept-friend-request/{friendId}")
+    fun acceptFriendRequest(request: HttpServletRequest, @PathVariable friendId: Int): ResponseEntity<Any> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
 
-        if (friendRequest.requestedId != userId) return ResponseEntity(HttpStatus.UNAUTHORIZED)
-        val friendRequestEntity = friendRequestRepository.findById(friendRequest.id).get()
-        friendRequestEntity.status = "ACCEPTED"
-        friendRequestRepository.save(friendRequestEntity)
+        // Use the custom method to find the friend request
+        val friendRequestEntity = friendRequestRepository.findByRequesterAndRequested(friendId, userId)
+        if (friendRequestEntity != null) {
+            // If the friend request exists, accept it
+            friendRequestEntity.status = "ACCEPTED"
+            friendRequestRepository.save(friendRequestEntity)
 
-        val friendEntity = Friend(friendAId = friendRequestEntity.requester, friendBId = friendRequestEntity.requested)
-        friendRepository.save(friendEntity)
-        return ResponseEntity.ok(friendEntity)
+            // Create the Friend entity
+            val friendEntity = Friend(friendAId = friendRequestEntity.requester, friendBId = userId)
+            friendRepository.save(friendEntity)
+
+            return ResponseEntity.ok(friendEntity)
+        } else {
+            // If the friend request does not exist, return an error response
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Friend request not found.")
+        }
     }
+
 
     @GetMapping("/get-friends")
     fun getFriends(request: HttpServletRequest): ResponseEntity<List<User>> {
         val uid = firebaseService.getUidFromFirebaseToken(request = request)
         val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
-        val friends = friendRepository.findAllFriendsByUserId(userId)
+        val friends = userRepository.findAllFriendsByUserId(userId)
+        friends.map { it.profilePic = gcsService.refreshProfileAvatarSignedURL(it) }
         return ResponseEntity.ok(friends)
+    }
+
+    @GetMapping("/get-public-users-not-friends")
+    fun getPublicUsersNotFriends(request: HttpServletRequest): ResponseEntity<List<User>> {
+        val uid = firebaseService.getUidFromFirebaseToken(request = request)
+        val userId = userRepository.findByFirebaseUid(uid).id ?: return ResponseEntity(HttpStatus.NOT_FOUND)
+        val users = userRepository.findPublicUsersNotFriends(userId)
+        users.map { it.profilePic = gcsService.refreshProfileAvatarSignedURL(it) }
+        return ResponseEntity.ok(users)
     }
 }

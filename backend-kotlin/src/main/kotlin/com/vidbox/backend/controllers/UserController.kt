@@ -76,10 +76,4 @@ class UserController(private val userRepository: UserRepository,
                 profilePic = if (user.profilePic != null) user.profilePic!! else ""
         ))
     }
-
-    @GetMapping("/get-public-users")
-    fun getPublicUsers(): ResponseEntity<List<User>> {
-        val users = userRepository.findByPrivacyLevel("public")
-        return ResponseEntity.ok(users)
-    }
 }

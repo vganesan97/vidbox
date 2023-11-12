@@ -10,17 +10,24 @@ import GroupList from "@/components/GroupList";
 import SignOut from "@/components/SignOut";
 import ImageComponent from "@/components/ImageComponent";
 import {
-    createGroupRequest, getFriendsRequest,
+    createGroupRequest,
+    getFriendRequests,
+    getFriendsRequest,
     getGroupAvatarPutSignedUrlRequest,
     getGroupsRequest,
     getLikedMoviesRequest,
-    getProfileAvatarPutSignedUrlRequest, getPublicUsersRequest, getRecommendedMoviesRequest, putGroupAvatarRequest,
+    getProfileAvatarPutSignedUrlRequest,
+    getPublicUsersNotFriendsRequest,
+    getRecommendedMoviesRequest,
+    putGroupAvatarRequest,
     putProfileAvatarRequest,
     refreshProfileAvatarSignedURLRequest,
     searchGroupsGetLastRequest,
     searchGroupsRequest,
     searchMoviesRequest
 } from "@/requests/backendRequests";
+import UserList from "@/components/UserList";
+import User from "@/components/User";
 
 export default function Dashboard() {
     const router = useRouter();
@@ -30,6 +37,8 @@ export default function Dashboard() {
     const [movieInfos, setMovieInfos] = useState([])
     const [groupInfos, setGroupInfos] = useState([])
     const [friendInfos, setFriendInfos] = useState([])
+    const [friendRequests, setFriendRequests] = useState([])
+
     const [publicUsersInfos, setPublicUsersInfos] = useState([])
 
 
@@ -175,7 +184,26 @@ export default function Dashboard() {
         const response = await getFriendsRequest(user)
         if (response) {
             console.log('friends:', response);
-            setFriendInfos(response.content); // Add the liked movies to the state
+            setFriendInfos(response); // Add the liked movies to the state
+        } else {
+            console.error(`Error: ${response}`);
+        }
+    };
+
+    const handleGetFriendRequestsClick = async (event: React.MouseEvent) => {
+        event.preventDefault(); // prevent form submit
+        console.log("get friends button clicked!"); // replace with actual implementation
+        setMovieInfos([]); // Clear the current search results
+        setLikedMovies([])
+        setRecommendedMovies([])
+        setGroupInfos([])
+        setPublicUsersInfos([])
+        setFriendInfos([])
+        setShowCreateGroupForm(false); // Hide the form
+        const response = await getFriendRequests(user)
+        if (response) {
+            console.log('friends:', response);
+            setFriendRequests(response); // Add the liked movies to the state
         } else {
             console.error(`Error: ${response}`);
         }
@@ -184,17 +212,39 @@ export default function Dashboard() {
     const handleGetPublicUsersClick = async (event: React.MouseEvent) => {
         event.preventDefault(); // prevent form submit
         console.log("get public users button clicked!"); // replace with actual implementation
-        setMovieInfos([]); // Clear the current search results
-        setLikedMovies([])
-        setRecommendedMovies([])
-        setGroupInfos([])
-        setPublicUsersInfos([])
-        setFriendInfos([])
+
+        // Clear the current UI states
+        setMovieInfos([]);
+        setLikedMovies([]);
+        setRecommendedMovies([]);
+        setGroupInfos([]);
+        setPublicUsersInfos([]);
+        setFriendInfos([]);
         setShowCreateGroupForm(false); // Hide the form
-        const response = await getPublicUsersRequest(user)
+
+        // Fetch the public users not friends
+        const response = await getPublicUsersNotFriendsRequest(user);
+
         if (response) {
             console.log('public users:', response);
-            setPublicUsersInfos(response.content); // Add the liked movies to the state
+
+            // Sort the response: users with a profilePic come first
+            const sortedUsers = response.sort((a: any, b: any) => {
+                // Convert the presence of profilePic to number explicitly for TypeScript
+                const picA = a.profilePic ? 1 : 0;
+                const picB = b.profilePic ? 1 : 0;
+
+                // If both have profile pics or both do not, then do secondary sorting
+                if (picA === picB) {
+                    return a.id - b.id; // Assuming 'id' is a number, sort by id
+                }
+
+                // If picA is 1 and picB is 0, a should come first, hence return -1
+                // If picA is 0 and picB is 1, b should come first, hence return 1
+                return picB - picA;
+            });
+
+            setPublicUsersInfos(sortedUsers); // Update state with sorted users
         } else {
             console.error(`Error: ${response}`);
         }
@@ -298,6 +348,7 @@ export default function Dashboard() {
             likedMovies.length > 0 ||
             movieInfos.length > 0 ||
             groupInfos.length > 0 ||
+            friendInfos.length > 0 ||
             recommendedMovies.length > 0;
     }
 
@@ -381,6 +432,11 @@ if (!loading && user) {
                             </button>
                         </div>
                         <div>
+                            <button onClick={handleGetFriendRequestsClick}>
+                                Friend Requests
+                            </button>
+                        </div>
+                        <div>
                             <button onClick={handleGetPublicUsersClick}>
                                 Public Users
                             </button>
@@ -422,10 +478,25 @@ if (!loading && user) {
                                     <h1 style={{paddingLeft: '0.6%', textDecoration: 'underline'}}>{movieInfos.length > 0 ? 'Search Results' : ''}</h1>
                                     <SearchResultsList movies={movieInfos}/>
                                 </>
-                            ) : groupInfos.length >0 ? (
+                            ) : groupInfos.length > 0 ? (
                                 <>
                                     <h1 style={{paddingLeft: '2%', textDecoration: 'underline'}}>Groups</h1>
                                     <GroupList groups={groupInfos}/>
+                                </>
+                            ) : friendInfos.length > 0 ? (
+                                <>
+                                    <h1 style={{paddingLeft: '2%', textDecoration: 'underline'}}>Friends</h1>
+                                    <UserList users={friendInfos} isFriend={true} isFriendRequest={false}/>
+                                </>
+                            ) : publicUsersInfos.length > 0 ? (
+                                <>
+                                    <h1 style={{paddingLeft: '2%', textDecoration: 'underline'}}>Public Users</h1>
+                                    <UserList users={publicUsersInfos} isFriend={false} isFriendRequest={false}/>
+                                </>
+                            ) : friendRequests.length > 0 ? (
+                                <>
+                                    <h1 style={{paddingLeft: '2%', textDecoration: 'underline'}}>Friend Requests</h1>
+                                    <UserList users={friendRequests} isFriend={true} isFriendRequest={true}/>
                                 </>
                             ) : recommendedMovies.length >0 ? (
                                 <>

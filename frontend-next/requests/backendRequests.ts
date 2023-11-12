@@ -145,11 +145,31 @@ export const getGroupsRequest = async (user: any) => {
     }
 }
 
-export const getPublicUsersRequest = async (user: any) => {
+export const getPublicUsersNotFriendsRequest = async (user: any) => {
     try {
         const client = await vidboxApiClient(user);
-        const response = await client.get('/user/get-public-users')
+        const response = await client.get('/friends/get-public-users-not-friends')
         console.log(response.data)
+        return response.data
+    } catch (error) {
+        console.error("An error occurred:", error)
+    }
+}
+
+export const sendFriendRequest = async (user: any, friendId: number) => {
+    try {
+        const client = await vidboxApiClient(user);
+        const response = await client.post(`/friends/send-friend-request/${friendId}`)
+        return response.data
+    } catch (error) {
+        console.error("An error occurred:", error)
+    }
+}
+
+export const acceptFriendRequest = async (user: any, friendId: number) => {
+    try {
+        const client = await vidboxApiClient(user);
+        const response = await client.post(`/friends/accept-friend-request/${friendId}`)
         return response.data
     } catch (error) {
         console.error("An error occurred:", error)
@@ -160,6 +180,17 @@ export const getFriendsRequest = async (user: any) => {
     try {
         const client = await vidboxApiClient(user);
         const response = await client.get('/friends/get-friends')
+        console.log(response.data)
+        return response.data
+    } catch (error) {
+        console.error("An error occurred:", error)
+    }
+}
+
+export const getFriendRequests = async (user: any) => {
+    try {
+        const client = await vidboxApiClient(user);
+        const response = await client.get('/friends/get-friend-requests')
         console.log(response.data)
         return response.data
     } catch (error) {

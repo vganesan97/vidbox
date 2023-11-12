@@ -17,6 +17,6 @@ data class FriendRequest(
     var requested: Int? = null,
 
     @Column(name = "status", nullable = false)
-    var status: String? = null,
+    var status: String? = "PENDING",
 
 )
