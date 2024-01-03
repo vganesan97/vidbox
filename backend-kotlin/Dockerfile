@@ -1,3 +1,7 @@
+# syntax = docker/dockerfile:1.2
+
+RUN --mount=type=secret,id=gcpJson,dst=/etc/secrets/gcpJson
+
 # Use the official Gradle image as a base image
 FROM gradle:jdk17 as builder
 
