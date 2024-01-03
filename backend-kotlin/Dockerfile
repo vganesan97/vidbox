@@ -8,6 +8,8 @@ COPY --chown=gradle:gradle . /home/gradle/src
 # Set the working directory
 WORKDIR /home/gradle/src
 
+RUN --mount=type=secret,id=gcpJson,dst=/etc/secrets/gcpJson
+
 # Use the Gradle wrapper to build the jar file
 RUN ./gradlew bootJar --no-daemon
 
@@ -22,7 +24,6 @@ WORKDIR /app
 # Copy the built jar file from the builder image
 COPY --from=builder /home/gradle/src/build/libs/*.jar /app/app.jar
 
-RUN --mount=type=secret,id=gcpJson,dst=/etc/secrets/gcpJson
 
 
 #ARG VIDBOX_JSON
