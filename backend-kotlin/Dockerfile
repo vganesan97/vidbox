@@ -33,7 +33,7 @@ COPY $gcpJson /etc/secrets/gcpJson
 RUN chmod 644 /etc/secrets/gcpJson
 
 # Switch back to the non-root user
-USER user
+USER root
 
 # Set the environment variable pointing to the secret file
 ENV GOOGLE_APPLICATION_CREDENTIALS=/etc/secrets/gcpJson
