@@ -9,7 +9,7 @@ COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
 
 # Use the Gradle wrapper to build the jar file
-RUN --mount=type=secret,id=gcpJson,dst=/etc/secrets/gcpJson ./gradlew bootJar --no-
+RUN --mount=type=secret,id=gcpJson,dst=/etc/secrets/gcpJson ./gradlew bootJar --no-daemon
 
 # Copy the secret file into the container
 COPY $gcpJson /etc/secrets/gcpJson
