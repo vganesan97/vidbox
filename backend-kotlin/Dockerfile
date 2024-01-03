@@ -26,7 +26,7 @@ ENV GOOGLE_APPLICATION_CREDENTIALS=$VIDBOX_JSON
 
 #ENV GOOGLE_APPLICATION_CREDENTIALS=vidbox.json
 
-#COPY vidbox.json /app/vidbox.json
+COPY $VIDBOX_JSON /app/vidbox.json
 
 # Expose port 8080 (or whatever port your app uses)
 EXPOSE 8080
