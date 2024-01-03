@@ -9,7 +9,13 @@ COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
 
 # Use the Gradle wrapper to build the jar file
-RUN --mount=type=secret,id=gcpJson,dst=/etc/secrets/gcpJson ./gradlew bootJar --no-daemon
+RUN --mount=type=secret,id=gcpJson,dst=/etc/secrets/gcpJson ./gradlew bootJar --no-
+
+# Copy the secret file into the container
+COPY $gcpJson /etc/secrets/gcpJson
+
+# Set the correct permissions for the secret file
+RUN chmod 644 /etc/secrets/gcpJson
 
 # Start with OpenJDK image
 FROM openjdk:17-jdk-slim
