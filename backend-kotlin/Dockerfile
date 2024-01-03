@@ -21,12 +21,12 @@ WORKDIR /app
 # Copy the built jar file from the builder image
 COPY --from=builder /home/gradle/src/build/libs/*.jar /app/app.jar
 
-ARG VIDBOX_JSON
-ENV GOOGLE_APPLICATION_CREDENTIALS=$VIDBOX_JSON
-
-#ENV GOOGLE_APPLICATION_CREDENTIALS=vidbox.json
-
-COPY $VIDBOX_JSON /app/vidbox.json
+#ARG VIDBOX_JSON
+#ENV GOOGLE_APPLICATION_CREDENTIALS=$VIDBOX_JSON
+#
+##ENV GOOGLE_APPLICATION_CREDENTIALS=vidbox.json
+#
+#COPY $VIDBOX_JSON /app/vidbox.json
 
 # Expose port 8080 (or whatever port your app uses)
 EXPOSE 8080
