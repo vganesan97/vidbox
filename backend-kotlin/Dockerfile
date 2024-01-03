@@ -1,7 +1,4 @@
 # syntax = docker/dockerfile:1.2
-
-RUN --mount=type=secret,id=gcpJson,dst=/etc/secrets/gcpJson
-
 # Use the official Gradle image as a base image
 FROM gradle:jdk17 as builder
 
@@ -24,6 +21,9 @@ WORKDIR /app
 
 # Copy the built jar file from the builder image
 COPY --from=builder /home/gradle/src/build/libs/*.jar /app/app.jar
+
+RUN --mount=type=secret,id=gcpJson,dst=/etc/secrets/gcpJson
+
 
 #ARG VIDBOX_JSON
 #ENV GOOGLE_APPLICATION_CREDENTIALS=$VIDBOX_JSON
