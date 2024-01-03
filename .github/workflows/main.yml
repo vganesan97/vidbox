@@ -1,4 +1,4 @@
-name: Deploy to App Engine
+name: Push to docker, deploy to render
 
 on:
   push:
@@ -16,20 +16,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - id: 'auth'
-        uses: 'google-github-actions/auth@v1'
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-          service_account: ${{ secrets.GCP_SA }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
 
-      - name: Deploy to App Engine
-        uses: google-github-actions/deploy-appengine@v1.2.7
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
         with:
-          working_directory: backend-kotlin
-          deliverables: app.yaml
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Cleanup old versions
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: backend-kotlin
+          push: true
+          tags: vg116/vidbox-backend:latest
+          build-args: VIDBOX_JSON = ${{ secrets.VIDBOX_JSON }}
+
+      - name: Trigger Render Deployment
+        # Only run this step if the branch is main
+        if: github.ref == 'refs/heads/main'
+        env:
+          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          gcloud app versions list --service default --format 'value(id)' --sort-by '~version' \
-          | tail -n +2 \
-          | xargs gcloud app versions delete --service default
+          curl "$deploy_url"
