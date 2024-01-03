@@ -8,10 +8,8 @@ COPY --chown=gradle:gradle . /home/gradle/src
 # Set the working directory
 WORKDIR /home/gradle/src
 
-RUN --mount=type=secret,id=gcpJson,dst=/etc/secrets/gcpJson
-
 # Use the Gradle wrapper to build the jar file
-RUN ./gradlew bootJar --no-daemon
+RUN --mount=type=secret,id=gcpJson,dst=/etc/secrets/gcpJson ./gradlew bootJar --no-daemon
 
 # Start with OpenJDK image
 FROM openjdk:17-jdk-slim
@@ -23,15 +21,6 @@ WORKDIR /app
 
 # Copy the built jar file from the builder image
 COPY --from=builder /home/gradle/src/build/libs/*.jar /app/app.jar
-
-
-
-#ARG VIDBOX_JSON
-#ENV GOOGLE_APPLICATION_CREDENTIALS=$VIDBOX_JSON
-#
-##ENV GOOGLE_APPLICATION_CREDENTIALS=vidbox.json
-#
-#COPY $VIDBOX_JSON /app/vidbox.json
 
 # Expose port 8080 (or whatever port your app uses)
 EXPOSE 8080
