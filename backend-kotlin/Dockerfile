@@ -1,5 +1,3 @@
-## syntax = docker/dockerfile:1.2
-
 # Stage 1: Build the application using Gradle
 FROM gradle:jdk17 as builder
 
@@ -23,19 +21,8 @@ WORKDIR /app
 # Copy the built jar file from the builder stage
 COPY --from=builder /home/gradle/src/build/libs/*.jar /app/app.jar
 
-## Switch to root user temporarily to access the secret file
-#USER user
-#
-## Copy the secret file into the container
-#COPY $gcpJson /etc/secrets/gcpJson
-#
-## Set the correct permissions for the secret file
-#RUN chmod 644 /etc/secrets/gcpJson
-
 # Switch back to the non-root user
 USER root
-RUN chmod 644 /etc/secrets/gcpJson
-USER user
 
 # Set the environment variable pointing to the secret file
 ENV GOOGLE_APPLICATION_CREDENTIALS=/etc/secrets/gcpJson
@@ -45,6 +32,7 @@ EXPOSE 8080
 
 # Command to run the application
 CMD ["java", "-jar", "/app/app.jar"]
+
 
 
 
