@@ -38,6 +38,8 @@ USER root
 # Set the environment variable pointing to the secret file
 ENV GOOGLE_APPLICATION_CREDENTIALS=/etc/secrets/gcpJson
 
+USER user
+
 # Expose port 8080 (or whatever port your app uses)
 EXPOSE 8080
 
