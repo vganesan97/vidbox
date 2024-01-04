@@ -34,11 +34,11 @@ COPY --from=builder /home/gradle/src/build/libs/*.jar /app/app.jar
 
 # Switch back to the non-root user
 USER root
+RUN chmod 644 /etc/secrets/gcpJson
+USER user
 
 # Set the environment variable pointing to the secret file
 ENV GOOGLE_APPLICATION_CREDENTIALS=/etc/secrets/gcpJson
-
-USER user
 
 # Expose port 8080 (or whatever port your app uses)
 EXPOSE 8080
